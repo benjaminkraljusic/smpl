@@ -1,0 +1,65 @@
+<launch>
+    <arg name="start_delay" default="0.0" />
+    <arg name="sleep"       default="bash -c 'sleep $(arg start_delay); $0 $@' "/>
+    <arg name="debug"       default="false"/>
+    <arg name="profile"     default="false"/>
+    <arg name="fullscreen"  default="false"/>
+    <arg name="dataset"     default="$(find smpl_test)/2DoF_planar/planar_2dof_datasets"/>
+    <arg name="problem_index"     default="4"/>
+    <arg name="planner"     default="arastar"/>  <!-- options: arastar, epase -->
+    <arg name="verbose"     default="false"/>
+    <arg name="visualize"   default="false"/>
+    <arg name="reverse"     default="false"/>
+    <arg name="check"       default="false"/>
+    <arg name="args"        default=""/>
+
+    <arg unless="$(arg debug)"   name="debug-prefix"   value=""/>
+    <arg     if="$(arg debug)"   name="debug-prefix"   value="gdb -ex run --args"/>
+    <arg unless="$(arg profile)" name="profile-prefix" value=""/>
+    <arg     if="$(arg profile)" name="profile-prefix" value="valgrind --tool=callgrind --callgrind-out-file='callgrind.fetch_smpl.%p'"/>
+
+    <arg name="launch-prefix" value="$(arg sleep) $(arg debug-prefix) $(arg profile-prefix)"/>
+
+    <arg unless="$(arg fullscreen)" name="rviz-fullscreen" value=""/>
+    <arg     if="$(arg fullscreen)" name="rviz-fullscreen" value="--fullscreen"/>
+
+    <!-- robot description -->
+    <param name="robot_description" command="cat '$(find smpl_test)/2DoF_planar/planar_2dof.urdf'"/>
+
+    <!-- 0. RViz -->
+    <node if="$(arg visualize)" type="rviz" name="rviz" pkg="rviz" args="-d $(find smpl_test)/config/config.rviz $(arg rviz-fullscreen)" output="screen"/>
+
+    <!-- 1. call planner -->
+    <node pkg="smpl_test" type="callBurPlannerTest" name="$(anon call_bur_planner_test)" launch-prefix="$(arg launch-prefix)" args="$(arg args)" output="screen" required="true">
+        <!-- robot model (for planning) -->
+        <rosparam param="robot_model">
+            kinematics_frame:
+                base_link
+            chain_tip_link:
+                tool
+        </rosparam>
+
+        <!-- collision checking -->
+        <rosparam command="load" file="$(find sbpl_collision_checking_test)/config/collision_model_planar_2dof.yaml"/>
+
+        <!-- planner parameters -->
+        <rosparam command="load" file="$(find smpl_test)/config/planar_2dof.yaml"/>
+        <param name="planning/mprim_filename" value="$(find smpl_test)/config/planar_2dof.mprim"/>
+
+        <!-- <param name="planning_problems_directory" value="$(find robowflex_library)/problems/fetch/bookshelf_small_fetch"/> -->
+        <param name="planning_problems_directory"  value="$(arg dataset)"/>
+        <param name="planning_problem_index" value="$(arg problem_index)"/>
+        <!-- <param name="planning_problem_index_end"   value="$(arg end)"/> -->
+        <param name="planning_problem_index_width" value="4"/>
+
+        <param name="planning_algorithm" value="$(arg planner)"/>
+        <param name="num_threads"        value="1"/>
+        <param name="goal_type"          value="joints"/>  <!-- options: joints, pose -->
+        <param name="planning_frame"     value="odom_combined"/>
+
+        <param name="verbose"   value="$(arg verbose)"/>
+        <param name="visualize" value="$(arg visualize)"/>
+        <param name="reverse"   value="$(arg reverse)"/>
+        <param name="check"     value="$(arg check)"/>
+    </node>
+</launch>

@@ -1,0 +1,43 @@
+robot_model_name: planar_2dof
+name: ""
+world:
+  collision_objects:
+    - header:
+        frame_id: base_link
+      id: box1
+      primitives:
+        - type: box
+          dimensions: [0.1, 0.1, 0.1]
+      primitive_poses:
+        - position: [0.45, 0.45, 0.2]
+          orientation: [0, 0, 0, 1]
+    
+    - header:
+        frame_id: base_link
+      id: box2
+      primitives:
+        - type: box
+          dimensions: [0.1, 0.1, 0.1]
+      primitive_poses:
+        - position: [-0.45, 0.45, 0.2]
+          orientation: [0, 0, 0, 1]  
+
+fixed_frame_transforms:
+  - header:
+      frame_id: base_link
+    child_frame_id: base_link
+    transform:
+      translation: [0, 0, 0]
+      rotation: [0, 0, 0, 1]
+allowed_collision_matrix:
+  entry_values:
+    - [false, true, true]
+    - [true, false, true]
+    - [true, true, false]
+  entry_names: [base_link, link1, link2]
+robot_state:
+  joint_state:
+    position: [0, 0]
+    name: [joint1, joint2]
+    header:
+      frame_id: base_link

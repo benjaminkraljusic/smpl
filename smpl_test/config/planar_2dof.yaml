@@ -1,0 +1,12 @@
+planning:
+  discretization:
+    joint1    0.017453292519943295
+    joint2    0.017453292519943295
+  use_xyz_snap_mprim: false
+  use_rpy_snap_mprim: false
+  use_xyzrpy_snap_mprim: true
+  use_short_dist_mprims: false
+  xyz_snap_dist_thresh: 0.4
+  rpy_snap_dist_thresh: 0.4
+  xyzrpy_snap_dist_thresh: 0.4
+  short_dist_mprims_thresh: 0.4
