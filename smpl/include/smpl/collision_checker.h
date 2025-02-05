@@ -59,6 +59,7 @@ public:
     /// \param[out] dist The distance to the nearest obstacle
     /// \return Whether the state is valid
     virtual bool isStateValid(const RobotState& state, bool verbose = false) = 0;
+    virtual bool isStateValid(int thread_idx, const RobotState& state, bool verbose = false){};
 
     /// \brief Return whether the interpolated path between two points is valid.
     ///
@@ -75,6 +76,11 @@ public:
         const RobotState& start,
         const RobotState& finish,
         bool verbose = false) = 0;
+    virtual bool isStateToStateValid(
+        int thread_idx,
+        const RobotState& start,
+        const RobotState& finish,
+        bool verbose = false){};
 
     /// \brief Return a linearly interpolated path between two joint states.
     ///
@@ -95,6 +101,10 @@ public:
     virtual auto getCollisionModelVisualization(const RobotState& state)
         -> std::vector<visual::Marker>;
     ///@}
+
+    // BENO 01/2025.
+    virtual double collisionDistance(const RobotState& state){};
+    virtual double collisionDistance(int thread_idx, const RobotState& state){};
 };
 
 class CollisionDistanceExtension : public virtual Extension

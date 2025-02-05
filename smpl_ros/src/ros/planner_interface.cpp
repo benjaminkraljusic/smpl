@@ -184,7 +184,6 @@ PlannerInterface::PlannerInterface(
 :
     m_robot(robot),
     m_checker(checker),
-    m_grid(grid),
     m_fk_iface(nullptr),
     m_params(),
     m_initialized(false),
@@ -193,6 +192,32 @@ PlannerInterface::PlannerInterface(
     m_planner(),
     m_sol_cost(INFINITECOST),
     m_planner_id()
+{
+    m_grid_vec = {grid};
+    construct();
+}
+
+PlannerInterface::PlannerInterface(
+    RobotModel* robot,
+    CollisionChecker* checker,
+    std::vector<OccupancyGrid*> grid_vec)
+:
+    m_robot(robot),
+    m_checker(checker),
+    m_fk_iface(nullptr),
+    m_params(),
+    m_initialized(false),
+    m_pspace(),
+    m_heuristics(),
+    m_planner(),
+    m_sol_cost(INFINITECOST),
+    m_planner_id()
+{
+    m_grid_vec = grid_vec;
+    construct();
+}    
+
+void PlannerInterface::construct()
 {
     if (m_robot) {
         m_fk_iface = m_robot->getExtension<ForwardKinematicsInterface>();
@@ -207,15 +232,28 @@ PlannerInterface::PlannerInterface(
         CollisionChecker* c,
         const PlanningParams& p)
     {
-        return MakeManipLattice(r, c, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+            return MakeManipLattice(r, c, p, m_grid_vec[i]);
     };
+
+    // BENO 01/25
+    m_space_factories["manip_dist"] = [this](
+        RobotModel* r, 
+        CollisionChecker* c, 
+        const PlanningParams& p)
+    {
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+            return MakeManipLatticeDist(r, c, p, m_grid_vec[i]); // This will be changed, only used temporarily for debugging purposes.
+    };
+    //
 
     m_space_factories["manip_lattice_egraph"] = [this](
         RobotModel* r,
         CollisionChecker* c,
         const PlanningParams& p)
     {
-        return MakeManipLatticeEGraph(r, c, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+            return MakeManipLatticeEGraph(r, c, p, m_grid_vec[i]);
     };
 
     m_space_factories["workspace"] = [this](
@@ -223,7 +261,8 @@ PlannerInterface::PlannerInterface(
         CollisionChecker* c,
         const PlanningParams& p)
     {
-        return MakeWorkspaceLattice(r, c, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+            return MakeWorkspaceLattice(r, c, p, m_grid_vec[i]);
     };
 
     m_space_factories["workspace_egraph"] = [this](
@@ -231,7 +270,8 @@ PlannerInterface::PlannerInterface(
         CollisionChecker* c,
         const PlanningParams& p)
     {
-        return MakeWorkspaceLatticeEGraph(r, c, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+            return MakeWorkspaceLatticeEGraph(r, c, p, m_grid_vec[i]);
     };
 
     m_space_factories["adaptive_workspace_lattice"] = [this](
@@ -239,7 +279,8 @@ PlannerInterface::PlannerInterface(
         CollisionChecker* c,
         const PlanningParams& p)
     {
-        return MakeAdaptiveWorkspaceLattice(r, c, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+            return MakeAdaptiveWorkspaceLattice(r, c, p, m_grid_vec[i]);
     };
 
     ///////////////////////////////
@@ -250,14 +291,16 @@ PlannerInterface::PlannerInterface(
         RobotPlanningSpace* space,
         const PlanningParams& p)
     {
-        return MakeMultiFrameBFSHeuristic(space, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+           return MakeMultiFrameBFSHeuristic(space, p, m_grid_vec[i]);
     };
 
     m_heuristic_factories["bfs"] = [this](
         RobotPlanningSpace* space,
         const PlanningParams& p)
     {
-        return MakeBFSHeuristic(space, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+           return MakeBFSHeuristic(space, p, m_grid_vec[i]);
     };
 
     m_heuristic_factories["euclid"] = MakeEuclidDistHeuristic;
@@ -268,10 +311,13 @@ PlannerInterface::PlannerInterface(
         RobotPlanningSpace* space,
         const PlanningParams& p)
     {
-        return MakeDijkstraEgraphHeuristic3D(space, p, m_grid);
+        for (int i = 0; i < m_grid_vec.size(); ++i)
+           return MakeDijkstraEgraphHeuristic3D(space, p, m_grid_vec[i]);
     };
 
     m_heuristic_factories["joint_distance_egraph"] = MakeJointDistEGraphHeuristic;
+
+    m_heuristic_factories["joint_distance_weighted"] = MakeJointDistWeightedHeuristic;
 
     /////////////////////////////
     // Setup Planner Factories //
@@ -283,6 +329,7 @@ PlannerInterface::PlannerInterface(
     m_planner_factories["larastar"] = MakeLARAStar;
     m_planner_factories["egwastar"] = MakeEGWAStar;
     m_planner_factories["padastar"] = MakePADAStar;
+    m_planner_factories["epase"] = MakeEPASE;
 }
 
 PlannerInterface::~PlannerInterface()
@@ -307,9 +354,12 @@ bool PlannerInterface::init(const PlanningParams& params)
         return false;
     }
 
-    if (!m_grid) {
-        SMPL_ERROR("Occupancy Grid given to Arm Planner Interface must be non-null");
-        return false;
+    for (int i = 0; i < m_grid_vec.size(); ++i)
+    {
+        if (!m_grid_vec[i]) {
+            SMPL_ERROR("All Occupancy Grids given to Arm Planner Interface must be non-null");
+            return false;
+        }
     }
 
     if (params.cost_per_cell < 0) {
@@ -504,7 +554,7 @@ void ProfilePath(RobotModel* robot, trajectory_msgs::JointTrajectory& traj)
             max_time = std::max(max_time, t);
         }
 
-        curr_point.time_from_start = prev_point.time_from_start + ros::Duration(max_time);
+        curr_point.time_from_start = prev_point.time_from_start + ros::Duration(3*max_time);
     }
 }
 
@@ -689,6 +739,57 @@ bool WritePath(
     return true;
 }
 
+bool PlannerInterface::checkStart(
+    // TODO: this planning scene is probably not being used in any meaningful way
+    const moveit_msgs::PlanningScene& planning_scene,
+    const moveit_msgs::MotionPlanRequest& req,
+    moveit_msgs::MotionPlanResponse& res)
+{
+    ClearMotionPlanResponse(req, res);
+
+    if (!m_initialized) {
+        res.error_code.val = moveit_msgs::MoveItErrorCodes::FAILURE;
+        return false;
+    }
+
+    if (!canServiceRequest(req, res)) {
+        return false;
+    }
+
+    if (req.goal_constraints.empty()) {
+        SMPL_WARN_NAMED(PI_LOGGER, "No goal constraints in request!");
+        res.error_code.val = moveit_msgs::MoveItErrorCodes::SUCCESS;
+        return true;
+    }
+
+    // TODO: lazily reinitialize planner when algorithm changes
+    if (!reinitPlanner(req.planner_id)) {
+        res.error_code.val = moveit_msgs::MoveItErrorCodes::FAILURE;
+        return false;
+    }
+
+    // res.trajectory_start = planning_scene.robot_state;
+    // SMPL_INFO_NAMED(PI_LOGGER, "Allowed Time (s): %0.3f", req.allowed_planning_time);
+
+    auto then = clock::now();
+
+    if (!setGoal(req.goal_constraints)) {
+        SMPL_ERROR("Failed to set goal");
+        res.planning_time = to_seconds(clock::now() - then);
+        res.error_code.val = moveit_msgs::MoveItErrorCodes::GOAL_IN_COLLISION;
+        return false;
+    }
+
+    if (!setStart(req.start_state)) {
+        // SMPL_ERROR("Failed to set initial configuration of robot");
+        // res.planning_time = to_seconds(clock::now() - then);
+        // res.error_code.val = moveit_msgs::MoveItErrorCodes::START_STATE_IN_COLLISION;
+        return false;
+    }
+
+    return true;
+}
+
 bool PlannerInterface::solve(
     // TODO: this planning scene is probably not being used in any meaningful way
     const moveit_msgs::PlanningScene& planning_scene,
@@ -763,7 +864,7 @@ bool PlannerInterface::solve(
     }
 
     postProcessPath(path);
-    SV_SHOW_INFO_NAMED("trajectory", makePathVisualization(path));
+    // SV_SHOW_INFO_NAMED("trajectory", makePathVisualization(path));
 
     SMPL_DEBUG_NAMED(PI_LOGGER, "smoothed path:");
     for (size_t pidx = 0; pidx < path.size(); ++pidx) {
@@ -1263,6 +1364,14 @@ auto PlannerInterface::getPlannerStats() -> std::map<std::string, double>
     stats["solution epsilon"] = m_planner->get_solution_eps();
     stats["expansions"] = m_planner->get_n_expands();
     stats["solution cost"] = m_sol_cost;
+        
+    std::vector<PlannerStats> search_stats;
+    m_planner->get_search_stats(&search_stats);
+
+    stats["time"] = search_stats[0].time;
+    stats["state_expansions"] = search_stats[0].expands;
+    stats["edge_expansions"] = search_stats[0].edge_expands;
+
     return stats;
 }
 

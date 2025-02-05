@@ -43,6 +43,7 @@ namespace smpl {
 namespace collision {
 
 static const char* SCM_LOGGER = "self";
+// std::mutex SelfCollisionModel::m_lock;
 
 SelfCollisionModel::SelfCollisionModel(
     OccupancyGrid* grid,
@@ -170,12 +171,15 @@ void SelfCollisionModel::updateAllowedCollisionMatrix(
             const std::string& entry1 = all_entries[i];
             const std::string& entry2 = all_entries[j];
             if (acm.getEntry(entry1, entry2, type)) {
-                if (type != collision_detection::AllowedCollision::NEVER) {
+                if (type == collision_detection::AllowedCollision::NEVER) 
+                {
                     m_acm.setEntry(entry1, entry2, false);
                 }
-                else {
+                else if (type == collision_detection::AllowedCollision::ALWAYS || type == collision_detection::AllowedCollision::CONDITIONAL)
+                {
                     m_acm.setEntry(entry1, entry2, true);
                 }
+                
             }
         }
     }
@@ -466,11 +470,15 @@ void SelfCollisionModel::updateGroup(int gidx)
     // insert/remove the voxels
     if (!v_rem.empty()) {
         ROS_DEBUG_NAMED(SCM_LOGGER, "  Remove %zu voxels from old voxels models", v_rem.size());
+        // m_lock.lock();
         m_grid->removePointsFromField(v_rem);
+        // m_lock.unlock();
     }
     if (!v_ins.empty()) {
         ROS_DEBUG_NAMED(SCM_LOGGER, "  Insert %zu voxels from new voxels models", v_ins.size());
+        // m_lock.lock();
         m_grid->addPointsToField(v_ins);
+        // m_lock.unlock();
     }
 
     // prepare voxels indices
@@ -515,11 +523,16 @@ void SelfCollisionModel::updateGroup(int gidx)
     // insert/remove the voxels
     if (!v_rem.empty()) {
         ROS_DEBUG_NAMED(SCM_LOGGER, "  Remove %zu voxels from old voxels models", v_rem.size());
+        // m_lock.lock();
         m_grid->removePointsFromField(v_rem);
+        // m_lock.unlock();
     }
     if (!v_ins.empty()) {
         ROS_DEBUG_NAMED(SCM_LOGGER, "  Insert %zu voxels from new voxels models", v_ins.size());
+        // m_lock.lock();
         m_grid->addPointsToField(v_ins);
+        // m_lock.unlock();
+
     }
 
     m_ab_voxels_indices = std::move(new_ab_ov_indices);
@@ -627,11 +640,15 @@ void SelfCollisionModel::updateVoxelsStates()
     // update occupancy grid with new voxel data
     if (!v_rem.empty()) {
         ROS_DEBUG_NAMED(SCM_LOGGER, "  Remove %zu voxels", v_rem.size());
+        // m_lock.lock();
         m_grid->removePointsFromField(v_rem);
+        // m_lock.unlock();
     }
     if (!v_ins.empty()) {
         ROS_DEBUG_NAMED(SCM_LOGGER, "  Insert %zu voxels", v_ins.size());
+        // m_lock.lock();
         m_grid->addPointsToField(v_ins);
+        // m_lock.unlock();
     }
 }
 
@@ -656,7 +673,109 @@ bool SelfCollisionModel::checkRobotVoxelsStateCollisions(double& dist)
     }
 #endif
 
-    return CheckVoxelsCollisions(m_rcs, q, *m_grid, m_padding, dist);
+    // m_lock.lock();
+    bool res = CheckVoxelsCollisions(m_rcs, q, *m_grid, m_padding, dist);
+    // m_lock.unlock();
+
+    return res;
+}
+
+// BENO 01/25
+// If a robot is in collision 0.0 is returned.
+double SelfCollisionModel::getCollisionDistance() {
+    auto& q = m_vq;
+    q.clear();
+
+    int cnt = 0;
+    for (const int ssidx : m_rcs.groupSpheresStateIndices(m_gidx)) {
+        const auto& ss = m_rcs.spheresState(ssidx);
+        const CollisionSphereState* s = ss.spheres.root();
+        q.push_back(s);
+    }
+
+    double d_c = std::numeric_limits<double>::infinity(); // Minimum workspace distance
+    double d = std::numeric_limits<double>::infinity();
+
+    while (!q.empty()) {
+        const CollisionSphereState* s = q.back();
+        q.pop_back();
+        cnt++;
+        // update non-meta states
+        if (s->parent_state->index != -1) {
+            m_rcs.updateSphereState(SphereIndex(s->parent_state->index, s->index()));
+        }
+
+       // std::cout << "Sfera: " << s->pos.x() << " " << s->pos.y() << " " << s->pos.z() << std::endl;
+        ROS_DEBUG_NAMED(SCM_LOGGER, "Checking sphere with radius %0.3f at (%0.3f, %0.3f, %0.3f)", s->model->radius, s->pos.x(), s->pos.y(), s->pos.z());
+
+        // m_lock.lock();
+        double obs_dist = SphereCollisionDistance(*m_grid, *s, m_padding);
+        // m_lock.unlock();
+
+        if (obs_dist < 0)
+            return 0.0;
+
+        if (obs_dist < d_c)
+            d_c = obs_dist;
+
+        if (obs_dist >= d) {
+            continue; // further -> ok!
+        }
+
+        const double alpha = 0.5;
+        d = std::max(0.0, (1.0 - alpha) * obs_dist);
+        if (d == 0.0) {
+            // can't lower separation distance further -> done!
+            q.clear();
+            continue;
+        }
+
+        // collision -> not ok or recurse!
+
+        if (s->isLeaf()) {
+            if (s->parent_state->index == -1) {
+                // meta-leaf -> recurse on existing children of referenced
+                // sphere tree root state
+
+                // node connecting meta tree to kinematic tree
+                assert(s->left == s->right);
+                const CollisionSphereState* sl = s->left->left;
+                const CollisionSphereState* sr = s->right->right;
+
+                if (sl && sr) {
+                    if (sl->model->radius > sr->model->radius) {
+                        q.push_back(sr);
+                        q.push_back(sl);
+                    }
+                    else {
+                        q.push_back(sl);
+                        q.push_back(sr);
+                    }
+                }
+                else if (sl) {
+                    q.push_back(sl);
+                }
+                else if (sr) {
+                    q.push_back(sr);
+                }
+            }
+            // else continue checking other subtrees
+        }
+        else { // recurse on both the children
+            if (s->left->model->radius > s->right->model->radius) {
+                q.push_back(s->right);
+                q.push_back(s->left);
+            }
+            else {
+                q.push_back(s->left);
+                q.push_back(s->right);
+            }
+        }
+    }
+
+    std::cout << "Broj provjerenih sfera: " << cnt << std::endl;
+    ROS_DEBUG_NAMED(SCM_LOGGER, "voxels distance = %0.3f", d);
+    return d_c;
 }
 
 bool SelfCollisionModel::checkAttachedBodyVoxelsStateCollisions(
@@ -673,7 +792,11 @@ bool SelfCollisionModel::checkAttachedBodyVoxelsStateCollisions(
         q.push_back(s);
     }
 
-    return CheckVoxelsCollisions(m_abcs, q, *m_grid, m_padding, dist);
+    // m_lock.lock();
+    bool res = CheckVoxelsCollisions(m_abcs, q, *m_grid, m_padding, dist);
+    // m_lock.unlock();
+
+    return res;
 }
 
 bool SelfCollisionModel::checkRobotSpheresStateCollisions(double& dist)
@@ -1417,7 +1540,10 @@ double SelfCollisionModel::robotVoxelsCollisionDistance()
 
         ROS_DEBUG_NAMED(SCM_LOGGER, "Checking sphere with radius %0.3f at (%0.3f, %0.3f, %0.3f)", s->model->radius, s->pos.x(), s->pos.y(), s->pos.z());
 
+        // m_lock.lock();
         double obs_dist = SphereCollisionDistance(*m_grid, *s, m_padding);
+        // m_lock.unlock();
+
         if (obs_dist >= d) {
             continue; // further -> ok!
         }

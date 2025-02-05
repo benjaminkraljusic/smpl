@@ -35,6 +35,7 @@
 // standard includes
 #include <memory>
 #include <string>
+#include <mutex>
 
 // system includes
 #include <smpl/forward.h>
@@ -130,8 +131,12 @@ public:
         const int gidx,
         CollisionDetails& details);
 
+    // BENO 01/25
+    double getCollisionDistance();
+    
     // TODO: contacts checks
     // TODO: detailed checks
+    // static std::mutex m_lock;
 
 private:
 

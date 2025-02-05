@@ -247,13 +247,15 @@ void ConvertCollisionObjectMsgToWorldObject(
         auto& prim = in.primitives[pidx];
         auto& pose = in.primitive_poses[pidx];
 
-        shapes::ShapeConstPtr sp(shapes::constructShapeFromMsg(prim));
+	shapes::ShapeConstPtr sp(shapes::constructShapeFromMsg(prim));
         if (!sp) {
-            ROS_WARN("Failed to construct shape from primitive message");
+            //ROS_WARN("Failed to construct shape from primitive message");
+	    // in place definition avoids unexplainable segmentation fault on compile time
+	    ROS_LOG(::ros::console::levels::Warn, ROSCONSOLE_DEFAULT_NAME, "Failed to construct shape from primitive message");
             continue;
         }
 
-        Eigen::Affine3d transform;
+        Eigen::Isometry3d transform;
         tf::poseMsgToEigen(pose, transform);
 
         o.shapes_.push_back(sp);
@@ -270,7 +272,7 @@ void ConvertCollisionObjectMsgToWorldObject(
             continue;
         }
 
-        Eigen::Affine3d transform;
+        Eigen::Isometry3d transform;
         tf::poseMsgToEigen(pose, transform);
 
         o.shapes_.push_back(sp);
@@ -287,7 +289,7 @@ void ConvertCollisionObjectMsgToWorldObject(
             continue;
         }
 
-        Eigen::Affine3d transform;
+        Eigen::Isometry3d transform;
         tf::poseMsgToEigen(pose, transform);
 
         o.shapes_.push_back(sp);
@@ -324,7 +326,7 @@ void ConvertCollisionObjectMsgToCollisionObject(
             continue;
         }
 
-        Eigen::Affine3d transform;
+        Eigen::Isometry3d transform;
         tf::poseMsgToEigen(pose, transform);
 
         o.shapes.push_back(sp);
@@ -341,7 +343,7 @@ void ConvertCollisionObjectMsgToCollisionObject(
             continue;
         }
 
-        Eigen::Affine3d transform;
+        Eigen::Isometry3d transform;
         tf::poseMsgToEigen(pose, transform);
 
         o.shapes.push_back(sp);
@@ -358,7 +360,7 @@ void ConvertCollisionObjectMsgToCollisionObject(
             continue;
         }
 
-        Eigen::Affine3d transform;
+        Eigen::Isometry3d transform;
         tf::poseMsgToEigen(pose, transform);
 
         o.shapes.push_back(sp);

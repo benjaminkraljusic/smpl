@@ -105,7 +105,7 @@ configure_file(
 ########################
 
 if(NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 endif()
 
 if(SMPL_HAS_ROSCONSOLE)
@@ -147,6 +147,7 @@ set(SMPL_LIBRARY_SOURCES
     src/graph/workspace_lattice_base.cpp
     src/graph/workspace_lattice_egraph.cpp
     src/graph/simple_workspace_lattice_action_space.cpp
+    src/graph/manip_lattice_dist.cpp # BENO 01/25
     src/heuristic/attractor_heuristic.cpp
     src/heuristic/bfs_heuristic.cpp
     src/heuristic/egraph_bfs_heuristic.cpp
@@ -162,6 +163,7 @@ set(SMPL_LIBRARY_SOURCES
     src/search/mhastarpp.cpp
     src/search/umhastar.cpp
     src/search/arastar.cpp
+    src/search/epase.cpp
     src/search/experience_graph_planner.cpp
     src/search/adaptive_planner.cpp
     src/search/lazy_arastar.cpp

@@ -77,6 +77,7 @@ bool Init(
     const std::string& robot_description,
     const std::string& base_link,
     const std::string& tip_link,
+    int num_threads,
     int free_angle)
 {
     ROS_INFO("Initialize KDL Robot Model");
@@ -133,7 +134,7 @@ bool Init(
     }
 
     ROS_INFO("Initialize URDF Robot Model with planning joints = %s", to_string(planning_joints).c_str());
-    if (!urdf::Init(model, &model->m_robot_model, &planning_joints)) {
+    if (!urdf::Init(model, &model->m_robot_model, &planning_joints, num_threads)) {
         ROS_ERROR("Failed to initialize URDF Robot Model");
         return false;
     }
@@ -144,11 +145,15 @@ bool Init(
         return false; // this shouldn't happen either
     }
 
+    model->m_chain_vec.resize(num_threads, model->m_chain);
+
     // FK solver
-    model->m_fk_solver = make_unique<KDL::ChainFkSolverPos_recursive>(model->m_chain);
+    for (int tidx=0; tidx < num_threads; tidx++)
+        model->m_fk_solver_vec.emplace_back(make_unique<KDL::ChainFkSolverPos_recursive>(model->m_chain_vec[tidx]));
 
     // IK Velocity solver
-    model->m_ik_vel_solver = make_unique<KDL::ChainIkSolverVel_pinv>(model->m_chain);
+    for (int tidx=0; tidx < num_threads; tidx++)    
+        model->m_ik_vel_solver_vec.emplace_back(make_unique<KDL::ChainIkSolverVel_pinv>(model->m_chain_vec[tidx]));
 
     // IK solver
     KDL::JntArray q_min(model->jointVariableCount());
@@ -165,17 +170,25 @@ bool Init(
 
     model->m_max_iterations = 200;
     model->m_kdl_eps = 0.001;
-    model->m_ik_solver = make_unique<KDL::ChainIkSolverPos_NR_JL>(
-            model->m_chain,
+
+    model->m_jnt_pos_in_vec.resize(num_threads);
+    model->m_jnt_pos_out_vec.resize(num_threads);
+
+    for (int tidx=0; tidx < num_threads; tidx++)    
+    {
+        model->m_ik_solver_vec.emplace_back(make_unique<KDL::ChainIkSolverPos_NR_JL>(
+            model->m_chain_vec[tidx],
             q_min,
             q_max,
-            *model->m_fk_solver,
-            *model->m_ik_vel_solver,
+            *model->m_fk_solver_vec[tidx],
+            *model->m_ik_vel_solver_vec[tidx],
             model->m_max_iterations,
-            model->m_kdl_eps);
+            model->m_kdl_eps));
 
-    model->m_jnt_pos_in.resize(model->m_chain.getNrOfJoints());
-    model->m_jnt_pos_out.resize(model->m_chain.getNrOfJoints());
+        model->m_jnt_pos_in_vec[tidx].resize(model->m_chain_vec[tidx].getNrOfJoints());
+        model->m_jnt_pos_out_vec[tidx].resize(model->m_chain_vec[tidx].getNrOfJoints());
+    }
+
     model->m_free_angle = free_angle;
     model->m_search_discretization = 0.02;
     model->m_timeout = 0.005;
@@ -186,9 +199,10 @@ bool KDLRobotModel::init(
     const std::string& robot_description,
     const std::string& base_link,
     const std::string& tip_link,
+    int num_threads,
     int free_angle)
 {
-    return Init(this, robot_description, base_link, tip_link, free_angle);
+    return Init(this, robot_description, base_link, tip_link, num_threads, free_angle);
 }
 
 auto KDLRobotModel::getBaseLink() const -> const std::string&
@@ -224,22 +238,23 @@ double GetSolverMinPosition(KDLRobotModel* model, int vidx)
 bool KDLRobotModel::computeIKSearch(
     const Eigen::Affine3d& pose,
     const RobotState& start,
-    RobotState& solution)
+    RobotState& solution,
+    int tidx)
 {
     // transform into kinematics and convert to kdl
-    auto* T_map_kinematics = GetLinkTransform(&this->robot_state, m_kinematics_link);
+    auto* T_map_kinematics = GetLinkTransform(&this->robot_state_vec[tidx], m_kinematics_link);
     KDL::Frame frame_des;
     tf::transformEigenToKDL(T_map_kinematics->inverse() * pose, frame_des);
 
     // seed configuration
     for (size_t i = 0; i < start.size(); i++) {
-        m_jnt_pos_in(i) = start[i];
+        m_jnt_pos_in_vec[tidx](i) = start[i];
     }
 
     // must be normalized for CartToJntSearch
-    NormalizeAngles(this, &m_jnt_pos_in);
+    NormalizeAngles(this, &m_jnt_pos_in_vec[tidx]);
 
-    auto initial_guess = m_jnt_pos_in(m_free_angle);
+    auto initial_guess = m_jnt_pos_in_vec[tidx](m_free_angle);
 
     auto start_time = smpl::clock::now();
     auto loop_time = 0.0;
@@ -253,19 +268,19 @@ bool KDLRobotModel::computeIKSearch(
                     this->m_search_discretization);
 
     while (loop_time < this->m_timeout) {
-        if (m_ik_solver->CartToJnt(m_jnt_pos_in, frame_des, m_jnt_pos_out) >= 0) {
-            NormalizeAngles(this, &m_jnt_pos_out);
+        if (m_ik_solver_vec[tidx]->CartToJnt(m_jnt_pos_in_vec[tidx], frame_des, m_jnt_pos_out_vec[tidx]) >= 0) {
+            NormalizeAngles(this, &m_jnt_pos_out_vec[tidx]);
             solution.resize(start.size());
             for (size_t i = 0; i < solution.size(); ++i) {
-                solution[i] = m_jnt_pos_out(i);
+                solution[i] = m_jnt_pos_out_vec[tidx](i);
             }
             return true;
         }
         if (!getCount(count, num_positive_increments, -num_negative_increments)) {
             return false;
         }
-        m_jnt_pos_in(m_free_angle) = initial_guess + this->m_search_discretization * count;
-        ROS_DEBUG("%d, %f", count, m_jnt_pos_in(m_free_angle));
+        m_jnt_pos_in_vec[tidx](m_free_angle) = initial_guess + this->m_search_discretization * count;
+        ROS_DEBUG("%d, %f", count, m_jnt_pos_in_vec[tidx](m_free_angle));
         loop_time = to_seconds(smpl::clock::now() - start_time);
     }
 
@@ -283,24 +298,26 @@ bool KDLRobotModel::computeIK(
     const Eigen::Affine3d& pose,
     const RobotState& start,
     RobotState& solution,
+    int tidx,
     ik_option::IkOption option)
 {
     if (option != ik_option::UNRESTRICTED) {
         return false;
     }
 
-    return computeIKSearch(pose, start, solution);
+    return computeIKSearch(pose, start, solution, tidx);
 }
 
 bool KDLRobotModel::computeIK(
     const Eigen::Affine3d& pose,
     const RobotState& start,
     std::vector<RobotState>& solutions,
+    int tidx,
     ik_option::IkOption option)
 {
     // NOTE: only returns one solution
     RobotState solution;
-    if (computeIK(pose, start, solution)) {
+    if (computeIK(pose, start, solution, tidx, option)) {
         solutions.push_back(solution);
     }
     return solutions.size() > 0;
@@ -309,30 +326,31 @@ bool KDLRobotModel::computeIK(
 bool KDLRobotModel::computeFastIK(
     const Eigen::Affine3d& pose,
     const RobotState& start,
-    RobotState& solution)
+    RobotState& solution,
+    int tidx)
 {
     // transform into kinematics frame and convert to kdl
-    auto* T_map_kinematics = GetLinkTransform(&this->robot_state, m_kinematics_link);
+    auto* T_map_kinematics = GetLinkTransform(&this->robot_state_vec[tidx], m_kinematics_link);
     KDL::Frame frame_des;
     tf::transformEigenToKDL(T_map_kinematics->inverse() * pose, frame_des);
 
     // seed configuration
     for (size_t i = 0; i < start.size(); i++) {
-        m_jnt_pos_in(i) = start[i];
+        m_jnt_pos_in_vec[tidx](i) = start[i];
     }
 
     // must be normalized for CartToJntSearch
-    NormalizeAngles(this, &m_jnt_pos_in);
+    NormalizeAngles(this, &m_jnt_pos_in_vec[tidx]);
 
-    if (m_ik_solver->CartToJnt(m_jnt_pos_in, frame_des, m_jnt_pos_out) < 0) {
+    if (m_ik_solver_vec[tidx]->CartToJnt(m_jnt_pos_in_vec[tidx], frame_des, m_jnt_pos_out_vec[tidx]) < 0) {
         return false;
     }
 
-    NormalizeAngles(this, &m_jnt_pos_out);
+    NormalizeAngles(this, &m_jnt_pos_out_vec[tidx]);
 
     solution.resize(start.size());
     for (size_t i = 0; i < solution.size(); ++i) {
-        solution[i] = m_jnt_pos_out(i);
+        solution[i] = m_jnt_pos_out_vec[tidx](i);
     }
 
     return true;

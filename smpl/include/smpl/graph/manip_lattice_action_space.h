@@ -91,7 +91,12 @@ public:
     /// \name Required Public Functions from ActionSpace
     ///@{
     bool apply(const RobotState& parent, std::vector<Action>& actions) override;
+    bool apply(const RobotState& parent, std::vector<Action>& actions, int action_idx, int tidx) override;
+    bool apply(const RobotState& parent, std::vector<Action>& actions, std::vector<int> action_idx_vec, int tidx) override;
     ///@}
+
+    void getNumSuccs(int& num_succs) override;
+    void getCheapExpensiveSuccsIdxs(int state_id, std::vector<int>& cheap_succs, std::vector<int>& expensive_succs) override;
 
 protected:
 
@@ -116,21 +121,23 @@ protected:
         const Affine3& goal,
         double dist_to_goal,
         ik_option::IkOption option,
-        std::vector<Action>& actions);
+        std::vector<Action>& actions,
+        int tidx);
 
     virtual bool getAction(
         const RobotState& parent,
         double goal_dist,
         double start_dist,
         const MotionPrimitive& mp,
-        std::vector<Action>& actions);
+        std::vector<Action>& actions,
+        int tidx=0);
 
     bool mprimActive(
         double start_dist,
         double goal_dist,
         MotionPrimitive::Type type) const;
 
-    auto getStartGoalDistances(const RobotState& state)
+    auto getStartGoalDistances(const RobotState& state, int tidx=0)
         -> std::pair<double, double>;
 };
 

@@ -63,6 +63,7 @@ public:
 
     /// \name Required Public Functions from RobotHeuristic
     ///@{
+    double getMetricStartDistance(double x, double y, double z, int tidx) override;
     double getMetricStartDistance(double x, double y, double z) override;
     double getMetricGoalDistance(double x, double y, double z) override;
     ///@}
@@ -79,6 +80,7 @@ public:
 
     /// \name Required Public Functions from Heuristic
     ///@{
+    int GetGoalHeuristic(int state_id, int tidx) override;
     int GetGoalHeuristic(int state_id) override;
     int GetStartHeuristic(int state_id) override;
     int GetFromToHeuristic(int from_id, int to_id) override;

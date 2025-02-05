@@ -72,8 +72,13 @@ bool CheckSphereCollision(
     double& dist)
 {
     const double effective_radius = s.model->radius + padding;
-    dist = grid.getSquaredDist(s.pos.x(), s.pos.y(), s.pos.z());
-    return dist >= effective_radius * effective_radius;
+    //std::cout << "x = " << s.pos.x() << " y = " << s.pos.y() << " z = " << s.pos.z() << " r = " << s.model->radius << std::endl;
+    double dist_squared = grid.getSquaredDist(s.pos.x(), s.pos.y(), s.pos.z());
+    // BENO 01/25
+    // Get the real collision distance
+    dist = std::sqrt(dist_squared) - s.model->radius;
+
+    return dist_squared >= effective_radius * effective_radius;
 }
 
 /// Compute the closest distance between a sphere and an occupied voxel
@@ -164,6 +169,76 @@ bool CheckVoxelsCollisions(
     return true;
 }
 
+// BENO 01/25
+// Function that extracts minimum distance between the robot and the set of obstacles in the workspace of the robot.
+// Implementation is based on the CheckVoxelsCollisions function.
+// If the robot is in collision, returns 0.0
+template <typename StateType>
+double GetWorkspaceCollisionDistance(
+    StateType& state,
+    std::vector<const CollisionSphereState*>& q,
+    const OccupancyGrid& grid,
+    double padding)
+{   
+    int cnt = 0;
+    double d_c = std::numeric_limits<double>::infinity(); // minimum workspace distance
+    std::cout << "=====================================" << std::endl;
+    while (!q.empty()) {
+        cnt++;
+        const CollisionSphereState* s = q.back();
+        q.pop_back();
+
+        if (s->parent_state->index != -1) {
+            state.updateSphereState(SphereIndex(s->parent_state->index, s->index()));
+        }
+
+        ROS_DEBUG_NAMED(COP_LOGGER, "Checking sphere '%s' with radius %0.3f at (%0.3f, %0.3f, %0.3f)", s->model->name.c_str(), s->model->radius, s->pos.x(), s->pos.y(), s->pos.z());
+
+        double obs_dist;
+        if (CheckSphereCollision(grid, *s, padding, obs_dist)) {
+            ROS_DEBUG_NAMED(COP_LOGGER, " dist^2: %0.3f -> ok!", obs_dist);
+            
+            if(obs_dist < d_c)
+                d_c = obs_dist;
+
+            continue; // no collision -> ok!
+        }
+
+        if (s->isLeaf()) {
+            if (s->parent_state->index == -1) { // meta-leaf
+                const CollisionSphereState* sl = s->left->left;
+                const CollisionSphereState* sr = s->right->right;
+
+                if (sl && sr) {
+                    if (sl->model->radius > sr->model->radius) {
+                        q.push_back(sr);
+                        q.push_back(sl);
+                    } else {
+                        q.push_back(sl);
+                        q.push_back(sr);
+                    }
+                } else if (sl) {
+                    q.push_back(sl);
+                } else if (sr) {
+                    q.push_back(sr);
+                }
+            } else { // normal leaf
+                return 0.0;
+            }
+        } else { // recurse on both children
+            if (s->left->model->radius > s->right->model->radius) {
+                q.push_back(s->right);
+                q.push_back(s->left);
+            } else {
+                q.push_back(s->left);
+                q.push_back(s->right);
+            }
+        }
+    }
+
+    std::cout << "Number of counted spheres: " << cnt << std::endl;
+    return d_c;
+}
 } // namespace collision
 } // namespace smpl
 

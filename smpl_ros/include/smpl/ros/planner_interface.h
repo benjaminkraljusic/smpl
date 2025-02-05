@@ -87,9 +87,19 @@ public:
         CollisionChecker* checker,
         OccupancyGrid* grid);
 
+    PlannerInterface(
+        RobotModel* robot,
+        CollisionChecker* checker,
+        std::vector<OccupancyGrid*> grid_vec);
+
     ~PlannerInterface();
 
     bool init(const PlanningParams& params);
+
+    bool checkStart(
+        const moveit_msgs::PlanningScene& planning_scene,
+        const moveit_msgs::MotionPlanRequest& req,
+        moveit_msgs::MotionPlanResponse& res);
 
     bool solve(
         const moveit_msgs::PlanningScene& planning_scene,
@@ -140,11 +150,12 @@ public:
         -> std::vector<visual::Marker>;
     ///@}
 
+
 protected:
 
     RobotModel* m_robot;
     CollisionChecker* m_checker;
-    OccupancyGrid* m_grid;
+    std::vector<OccupancyGrid*> m_grid_vec;
 
     ForwardKinematicsInterface* m_fk_iface;
 
@@ -158,7 +169,6 @@ protected:
     std::map<std::string, PlannerFactory> m_planner_factories;
 
     // planner components
-
     std::unique_ptr<RobotPlanningSpace> m_pspace;
     std::map<std::string, std::unique_ptr<RobotHeuristic>> m_heuristics;
     std::unique_ptr<SBPLPlanner> m_planner;
@@ -166,6 +176,9 @@ protected:
     int m_sol_cost;
 
     std::string m_planner_id;
+
+    void construct();
+
 
     // Set start configuration
     bool setGoal(const GoalConstraints& v_goal_constraints);

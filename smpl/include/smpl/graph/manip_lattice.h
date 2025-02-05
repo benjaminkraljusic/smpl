@@ -36,6 +36,7 @@
 // standard includes
 #include <time.h>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -134,7 +135,11 @@ public:
 
     /// \name Required Public Functions from PoseProjectionExtension
     ///@{
+    bool projectToPose(int state_id, Affine3& pos, int tidx) override;
     bool projectToPose(int state_id, Affine3& pos) override;
+    //==========================================================
+    bool projectToPose(RobotState const & state, Affine3 & pos);
+    //==========================================================
     ///@}
 
     /// \name Required Public Functions from RobotPlanningSpace
@@ -159,6 +164,20 @@ public:
         int state_id,
         std::vector<int>* succs,
         std::vector<int>* costs) override;
+    void GetNumSuccs(int state_id, int& num_succs) override;
+    void GetCheapExpensiveSuccsIdxs(int state_id, std::vector<int>& cheap_succs, std::vector<int>& expensive_succs) override;
+    void GetSucc(
+        int state_id,
+        int action_idx,
+        std::vector<int>* succs,
+        std::vector<int>* costs,
+        int thread_id) override;    
+    void GetSuccs(
+        int state_id,
+        std::vector<int> action_idx_vec,
+        std::vector<int>* succs,
+        std::vector<int>* costs,
+        int thread_id) override;    
     void PrintState(int state_id, bool verbose, FILE* fout = nullptr) override;
     void GetPreds(
         int state_id,
@@ -166,6 +185,14 @@ public:
         std::vector<int>* costs) override;
     ///@}
 
+    //==============================================================
+    std::vector<RobotState> m_collision_states;
+    //==============================================================
+
+    //BENO 01/25
+    std::vector<ManipLatticeState*>& getStates();
+    ActionSpace* getActions();
+    
 protected:
 
     /// \name discretization methods
@@ -181,7 +208,7 @@ protected:
     int getOrCreateState(const RobotCoord& coord, const RobotState& state);
     int reserveHashEntry();
 
-    Affine3 computePlanningFrameFK(const RobotState& state) const;
+    Affine3 computePlanningFrameFK(const RobotState& state, int tidx) const;
 
     int cost(
         ManipLatticeState* HashEntry1,
@@ -189,17 +216,18 @@ protected:
         bool bState2IsGoal) const;
 
     bool checkAction(const RobotState& state, const Action& action);
+    bool checkAction(const RobotState& state, const Action& action, int thread_id);
 
-    bool isGoal(const RobotState& state);
+    bool isGoal(const RobotState& state, int tidx=0);
 
     auto getStateVisualization(const RobotState& vars, const std::string& ns)
         -> std::vector<visual::Marker>;
 
 private:
-
+    std::mutex m_lock;
     ForwardKinematicsInterface* m_fk_iface = nullptr;
     ActionSpace* m_actions = nullptr;
-
+    
     // cached from robot model
     std::vector<double> m_min_limits;
     std::vector<double> m_max_limits;

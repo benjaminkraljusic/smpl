@@ -44,6 +44,7 @@
 #include <smpl/extension.h>
 #include <smpl/spatial.h>
 #include <smpl/types.h>
+#include <smpl/console/console.h>
 
 namespace smpl {
 
@@ -73,6 +74,10 @@ public:
     virtual double accLimit(int jidx) const = 0;
 
     /// \brief Check a state for joint limit violations.
+    virtual bool checkJointLimits(const RobotState& state, int tidx, bool verbose = false)
+    {SMPL_ERROR("Multi-threaded checkJointLimits not implemented");};
+
+    /// \brief Check a state for joint limit violations.
     virtual bool checkJointLimits(const RobotState& state, bool verbose = false) = 0;
 
     size_t jointCount() const { return planning_joints_.size(); }
@@ -99,6 +104,8 @@ public:
     /// { x, y, z, R, P, Y } of the planning link
     ///
     /// \return true if forward kinematics were computed; false otherwise
+    virtual Affine3 computeFK(const RobotState& state, int tidx)
+    {SMPL_ERROR("Multi-threaded computeFK not implemented");};
     virtual Affine3 computeFK(const RobotState& state) = 0;
 };
 
@@ -129,6 +136,12 @@ public:
         const RobotState& start,
         RobotState& solution,
         ik_option::IkOption option = ik_option::UNRESTRICTED) = 0;
+    virtual bool computeIK(
+        const Affine3& pose,
+        const RobotState& start,
+        RobotState& solution,
+        int tidx,
+        ik_option::IkOption option = ik_option::UNRESTRICTED) = 0;
 
     /// \brief Compute multiple inverse kinematic solutions.
     virtual bool computeIK(
@@ -136,6 +149,13 @@ public:
         const RobotState& start,
         std::vector<RobotState>& solutions,
         ik_option::IkOption option = ik_option::UNRESTRICTED) = 0;
+    virtual bool computeIK(
+        const Affine3& pose,
+        const RobotState& start,
+        std::vector<RobotState>& solutions,
+        int tidx,
+        ik_option::IkOption option = ik_option::UNRESTRICTED) = 0;
+
 };
 
 class RedundantManipulatorInterface : public virtual RobotModel

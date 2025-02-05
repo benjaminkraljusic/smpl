@@ -32,6 +32,14 @@ auto MakeManipLattice(
     const OccupancyGrid* grid)
     -> std::unique_ptr<RobotPlanningSpace>;
 
+// BENO 01/25
+auto MakeManipLatticeDist(
+    RobotModel* robot,
+    CollisionChecker* checker,
+    const PlanningParams& params,
+    const OccupancyGrid* grid)
+    -> std::unique_ptr<RobotPlanningSpace>;
+//
 auto MakeManipLatticeEGraph(
     RobotModel* robot,
     CollisionChecker* checker,
@@ -97,6 +105,11 @@ auto MakeJointDistEGraphHeuristic(
     const PlanningParams& params)
     -> std::unique_ptr<RobotHeuristic>;
 
+auto MakeJointDistWeightedHeuristic(
+    RobotPlanningSpace* space,
+    const PlanningParams& params)
+    -> std::unique_ptr<RobotHeuristic>;
+
 //////////////////////
 // Search Factories //
 //////////////////////
@@ -132,6 +145,12 @@ auto MakeEGWAStar(
     -> std::unique_ptr<SBPLPlanner>;
 
 auto MakePADAStar(
+    RobotPlanningSpace* space,
+    RobotHeuristic* heuristic,
+    const PlanningParams& params)
+    -> std::unique_ptr<SBPLPlanner>;
+
+auto MakeEPASE(
     RobotPlanningSpace* space,
     RobotHeuristic* heuristic,
     const PlanningParams& params)

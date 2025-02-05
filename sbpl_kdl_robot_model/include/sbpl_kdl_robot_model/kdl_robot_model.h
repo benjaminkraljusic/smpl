@@ -63,6 +63,7 @@ public:
         const std::string& robot_description,
         const std::string& base_link,
         const std::string& tip_link,
+        int num_threads = 1,
         int free_angle = DEFAULT_FREE_ANGLE_INDEX);
 
     auto getBaseLink() const -> const std::string&;
@@ -71,7 +72,8 @@ public:
     bool computeIKSearch(
         const Eigen::Affine3d& pose,
         const RobotState& start,
-        RobotState& solution);
+        RobotState& solution,
+        int tidx);
 
     void printRobotModelInformation();
 
@@ -82,7 +84,14 @@ public:
     bool computeFastIK(
         const Eigen::Affine3d& pose,
         const RobotState& start,
-        RobotState& solution) override;
+        RobotState& solution,
+        int tidx);
+    bool computeFastIK(
+        const Eigen::Affine3d& pose,
+        const RobotState& start,
+        RobotState& solution) override
+    {return computeFastIK(pose, start, solution, 0);};
+
     /// @}
 
     /// \name InverseKinematicsInterface Interface
@@ -91,13 +100,28 @@ public:
         const Eigen::Affine3d& pose,
         const RobotState& start,
         RobotState& solution,
+        int tidx,
         ik_option::IkOption option = ik_option::UNRESTRICTED) override;
+    bool computeIK(
+        const Eigen::Affine3d& pose,
+        const RobotState& start,
+        RobotState& solution,
+        ik_option::IkOption option = ik_option::UNRESTRICTED) override
+    {return computeIK(pose, start, solution, 0, option);}
 
     bool computeIK(
         const Eigen::Affine3d& pose,
         const RobotState& start,
         std::vector<RobotState>& solutions,
+        int tidx,
         ik_option::IkOption option = ik_option::UNRESTRICTED) override;
+    bool computeIK(
+        const Eigen::Affine3d& pose,
+        const RobotState& start,
+        std::vector<RobotState>& solutions,
+        ik_option::IkOption option = ik_option::UNRESTRICTED) override
+    {return computeIK(pose, start, solutions, 0, option);}
+
     ///@}
 
     /// \name Extension Interface
@@ -118,10 +142,11 @@ public:
 
     KDL::Tree m_tree;
     KDL::Chain m_chain;
+    std::vector<KDL::Chain> m_chain_vec;
 
-    std::unique_ptr<KDL::ChainFkSolverPos_recursive>    m_fk_solver;
-    std::unique_ptr<KDL::ChainIkSolverVel_pinv>         m_ik_vel_solver;
-    std::unique_ptr<KDL::ChainIkSolverPos_NR_JL>        m_ik_solver;
+    std::vector<std::unique_ptr<KDL::ChainFkSolverPos_recursive>>    m_fk_solver_vec;
+    std::vector<std::unique_ptr<KDL::ChainIkSolverVel_pinv>>         m_ik_vel_solver_vec;
+    std::vector<std::unique_ptr<KDL::ChainIkSolverPos_NR_JL>>        m_ik_solver_vec;
 
     // ik solver settings
     int m_max_iterations;
@@ -130,6 +155,9 @@ public:
     // temporary storage
     KDL::JntArray m_jnt_pos_in;
     KDL::JntArray m_jnt_pos_out;
+    // for multi-threaded IK
+    std::vector<KDL::JntArray> m_jnt_pos_in_vec;
+    std::vector<KDL::JntArray> m_jnt_pos_out_vec;
 
     // ik search configuration
     int m_free_angle;
