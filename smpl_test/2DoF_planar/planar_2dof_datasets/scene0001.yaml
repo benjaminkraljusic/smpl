@@ -9,7 +9,7 @@ world:
         - type: box
           dimensions: [0.1, 0.1, 0.1]
       primitive_poses:
-        - position: [0.45, 0.45, 0.2]
+        - position: [0.45, 0.45, 0.25]
           orientation: [0, 0, 0, 1]
     
     - header:
@@ -19,7 +19,7 @@ world:
         - type: box
           dimensions: [0.1, 0.1, 0.1]
       primitive_poses:
-        - position: [-0.45, 0.45, 0.2]
+        - position: [-0.45, 0.45, 0.25]
           orientation: [0, 0, 0, 1]  
 
 fixed_frame_transforms:
@@ -31,9 +31,9 @@ fixed_frame_transforms:
       rotation: [0, 0, 0, 1]
 allowed_collision_matrix:
   entry_values:
-    - [false, true, true]
-    - [true, false, true]
-    - [true, true, false]
+    - [true, true, true]
+    - [true, true, true]
+    - [true, true, true]
   entry_names: [base_link, link1, link2]
 robot_state:
   joint_state:

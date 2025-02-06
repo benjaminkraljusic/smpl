@@ -16,7 +16,7 @@
     <arg unless="$(arg debug)"   name="debug-prefix"   value=""/>
     <arg     if="$(arg debug)"   name="debug-prefix"   value="gdb -ex run --args"/>
     <arg unless="$(arg profile)" name="profile-prefix" value=""/>
-    <arg     if="$(arg profile)" name="profile-prefix" value="valgrind --tool=callgrind --callgrind-out-file='callgrind.fetch_smpl.%p'"/>
+    <arg     if="$(arg profile)" name="profile-prefix" value=""/>
 
     <arg name="launch-prefix" value="$(arg sleep) $(arg debug-prefix) $(arg profile-prefix)"/>
 

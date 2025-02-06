@@ -72,12 +72,8 @@ bool CheckSphereCollision(
     double& dist)
 {
     const double effective_radius = s.model->radius + padding;
-    //std::cout << "x = " << s.pos.x() << " y = " << s.pos.y() << " z = " << s.pos.z() << " r = " << s.model->radius << std::endl;
     double dist_squared = grid.getSquaredDist(s.pos.x(), s.pos.y(), s.pos.z());
-    // BENO 01/25
-    // Get the real collision distance
-    dist = std::sqrt(dist_squared) - s.model->radius;
-
+    
     return dist_squared >= effective_radius * effective_radius;
 }
 

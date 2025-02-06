@@ -11,12 +11,12 @@ max_acceleration_scaling_factor: 0
 goal_constraints:
   - joint_constraints:
       - joint_name: joint1
-        position: 3.14
-      - position: 0.0
+        position: 1.57079632679
+      - position: 3.141
         joint_name: joint2
 start_state:
   joint_state:
-    position: [0.0, 0.0]
+    position: [1.57079632679, 3.14]
     name: [joint1, joint2]
     header:
       frame_id: base_link

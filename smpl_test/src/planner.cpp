@@ -445,14 +445,6 @@ bool Planner::planForProblemIdx(int problem_index, bool check) {
         return true;
     }
 
-    // // auto manipSpaceTmp = dynamic_cast<const smpl::ManipLatticeDist*>(planner_interface_->space());
-    // // manipSpaceTmp->PrintMinDistance(manipSpaceTmp->getStates().at(0));
-    // std::cout << "SAMO DA JA VIDIM NESTO" << std::endl;
-    // VisualizeCollisionWorld();
-    // while (ros::ok()) {
-    //     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    // }
-    // return 0;
 
     auto plan_found = planner_interface_->solve(planning_scene, request_msg, res);
 
@@ -590,21 +582,6 @@ bool Planner::ComputeIK(
     return true;
 }
 */
-
-// // BENO 01/25
-// void Planner::VisualizeCollisionWorldWithRobot(std::vector<double> state) {
-//     while (!ros::ok()) {
-//         std::this_thread::sleep_for(std::chrono::milliseconds(500));
-//     }
-//     auto bounding_box = cc_.grid()->getBoundingBoxVisualization();
-//     auto markers = cc_.getCollisionWorldVisualization(0);
-//     auto occupied_voxels = cc_.getOccupiedVoxelsVisualization();
-//     auto markers_robot = cc_.getCollisionRobotVisualization(0, state);
-//     SV_SHOW_INFO(bounding_box);
-//     SV_SHOW_INFO(markers);
-//     SV_SHOW_INFO(occupied_voxels);
-//     SV_SHOW_INFO(markers_robot);
-// }
 
 void Planner::VisualizeCollisionWorld() {
     while (!ros::ok()) {

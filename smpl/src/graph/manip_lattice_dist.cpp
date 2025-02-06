@@ -34,7 +34,7 @@ void ManipLatticeDist::GetSuccs(
 
     //Getting collision distance
     double d_c = collisionChecker()->collisionDistance(0, parent_entry->state);
-    std::cout << "Hello from manip_latice_dist.cpp; d_c = " << d_c << std::endl;
+    // std::cout << "Hello from manip_latice_dist.cpp; d_c = " << d_c << std::endl;
     int goal_succ_count = 0;
 
     std::vector<Action> actions;

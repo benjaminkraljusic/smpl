@@ -685,8 +685,6 @@ bool SelfCollisionModel::checkRobotVoxelsStateCollisions(double& dist)
 double SelfCollisionModel::getCollisionDistance() {
     auto& q = m_vq;
     q.clear();
-
-    int cnt = 0;
     for (const int ssidx : m_rcs.groupSpheresStateIndices(m_gidx)) {
         const auto& ss = m_rcs.spheresState(ssidx);
         const CollisionSphereState* s = ss.spheres.root();
@@ -699,13 +697,10 @@ double SelfCollisionModel::getCollisionDistance() {
     while (!q.empty()) {
         const CollisionSphereState* s = q.back();
         q.pop_back();
-        cnt++;
         // update non-meta states
         if (s->parent_state->index != -1) {
             m_rcs.updateSphereState(SphereIndex(s->parent_state->index, s->index()));
         }
-
-       // std::cout << "Sfera: " << s->pos.x() << " " << s->pos.y() << " " << s->pos.z() << std::endl;
         ROS_DEBUG_NAMED(SCM_LOGGER, "Checking sphere with radius %0.3f at (%0.3f, %0.3f, %0.3f)", s->model->radius, s->pos.x(), s->pos.y(), s->pos.z());
 
         // m_lock.lock();
@@ -772,8 +767,6 @@ double SelfCollisionModel::getCollisionDistance() {
             }
         }
     }
-
-    std::cout << "Broj provjerenih sfera: " << cnt << std::endl;
     ROS_DEBUG_NAMED(SCM_LOGGER, "voxels distance = %0.3f", d);
     return d_c;
 }
@@ -1528,7 +1521,7 @@ double SelfCollisionModel::robotVoxelsCollisionDistance()
     }
 
     double d = std::numeric_limits<double>::infinity();
-
+    
     while (!q.empty()) {
         const CollisionSphereState* s = q.back();
         q.pop_back();
@@ -1547,7 +1540,7 @@ double SelfCollisionModel::robotVoxelsCollisionDistance()
         if (obs_dist >= d) {
             continue; // further -> ok!
         }
-
+        
         const double alpha = 0.5;
         d = std::max(0.0, (1.0 - alpha) * obs_dist);
         if (d == 0.0) {
