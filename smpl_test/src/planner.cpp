@@ -211,11 +211,12 @@ bool Planner::initForProblemsDir(std::string const & problems_dir, bool reverse)
                 - request_common_msg.workspace_parameters.min_corner.y;
     df_size_z = request_common_msg.workspace_parameters.max_corner.z
                 - request_common_msg.workspace_parameters.min_corner.z;
+
     df_origin_x = -df_size_x / 2;
     df_origin_y = -df_size_y / 2;
-    df_origin_z = 0.0;
-    df_res = 0.02;       // TODO later:
-    max_distance = 1.8;  // set these externally(?)
+    df_origin_z = -df_size_z / 2; // 0.0; // Temporary solution used for debugging
+    df_res = df_size_x/100;       // TODO later: // This too
+    max_distance = df_size_x/2;  // set these externally(?) // This too
 
     using DistanceMapType = smpl::EuclidDistanceMap;    
 

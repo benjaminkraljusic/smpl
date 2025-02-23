@@ -102,9 +102,11 @@ public:
         -> std::vector<visual::Marker>;
     ///@}
 
-    // BENO 01/2025.
-    virtual double collisionDistance(const RobotState& state){};
-    virtual double collisionDistance(int thread_idx, const RobotState& state){};
+    // // BENO 01/2025.
+    // virtual double collisionDistance(const RobotState& state){};
+    // virtual double collisionDistance(int thread_idx, const RobotState& state){};
+
+    virtual double distanceToCollision(int thread_idx, const std::vector<double>& state){};
 };
 
 class CollisionDistanceExtension : public virtual Extension

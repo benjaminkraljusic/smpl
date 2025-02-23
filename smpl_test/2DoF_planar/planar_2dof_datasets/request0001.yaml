@@ -11,13 +11,13 @@ max_acceleration_scaling_factor: 0
 goal_constraints:
   - joint_constraints:
       - joint_name: joint1
-        position: 1.57079632679
-      - position: 3.141
+        position: 0
+      - position: 0
         joint_name: joint2
 start_state:
   joint_state:
-    position: [1.57079632679, 3.14]
+    position: [0, 1.7]
     name: [joint1, joint2]
     header:
       frame_id: base_link
-planner_id: BKPIECEGood
+planner_id: ""

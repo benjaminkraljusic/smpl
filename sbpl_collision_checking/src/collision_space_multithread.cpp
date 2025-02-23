@@ -395,9 +395,7 @@ bool CollisionSpaceMultithread::checkCollision(int thread_idx, const double* sta
 double CollisionSpaceMultithread::collisionDistance(int thread_idx, const std::vector<double>& state)
 {
     updateState(thread_idx, state);
-    // BENO 01/25 
-    return m_scm[thread_idx]-> getCollisionDistance();
-    // return m_scm[thread_idx]->collisionDistance(*m_rcs[thread_idx], *m_abcs[thread_idx], m_gidx);
+    return m_scm[thread_idx]->collisionDistance(*m_rcs[thread_idx], *m_abcs[thread_idx], m_gidx);
 }
 
 double CollisionSpaceMultithread::collisionDistance(int thread_idx,const double* state)
@@ -726,6 +724,12 @@ bool CollisionSpaceMultithread::withinJointPositionLimits(
         }
     }
     return true;
+}
+
+double CollisionSpaceMultithread::distanceToCollision(int thread_idx, const std::vector<double>& state)
+{
+    updateState(thread_idx, state);
+    return m_scm[thread_idx]-> getCollisionDistance();
 }
 
 // auto BuildCollisionSpace(

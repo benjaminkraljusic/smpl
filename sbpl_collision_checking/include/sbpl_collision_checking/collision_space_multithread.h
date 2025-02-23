@@ -190,6 +190,8 @@ public:
     double collisionDistance(int thread_idx, const std::vector<double>& state);
     double collisionDistance(int thread_idx, const double* state);
 
+    double distanceToCollision(int thread_idx, const std::vector<double>& state);
+    
     bool collisionDetails(
         int thread_idx,
         const std::vector<double>& state,

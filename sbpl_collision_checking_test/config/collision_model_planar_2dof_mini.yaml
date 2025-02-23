@@ -13,12 +13,12 @@ robot_collision_model:
   world_joint:
     name: world_joint  # map(?)
     type: planar  # fixed, floating
-
+ 
   voxels_models:
     - { link_name: base_link, res: 0.01 }
     - { link_name: link1, res: 0.01 }
     - { link_name: link2, res: 0.01 }
-
+  
   spheres_models:
     - link_name: base_link
       auto: false
@@ -32,11 +32,11 @@ robot_collision_model:
           - { name: l102, x: 0.10,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
           - { name: l103, x: 0.15,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
           - { name: l104, x: 0.20,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
-          - { name: l105, x: 0.25,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
-          - { name: l106, x: 0.30,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
-          - { name: l107, x: 0.35,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
-          - { name: l108, x: 0.40,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
-          - { name: l109, x: 0.45,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
+          # - { name: l105, x: 0.25,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
+          # - { name: l106, x: 0.30,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
+          # - { name: l107, x: 0.35,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
+          # - { name: l108, x: 0.40,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
+          # - { name: l109, x: 0.45,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
 
     - link_name: link2
       auto: false
@@ -45,11 +45,11 @@ robot_collision_model:
           - { name: l202, x: 0.10,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
           - { name: l203, x: 0.15,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
           - { name: l204, x: 0.20,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
-          - { name: l205, x: 0.25,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
-          - { name: l206, x: 0.30,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
-          - { name: l207, x: 0.35,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
-          - { name: l208, x: 0.40,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
-          - { name: l209, x: 0.45,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
+          # - { name: l205, x: 0.25,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
+          # - { name: l206, x: 0.30,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
+          # - { name: l207, x: 0.35,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
+          # - { name: l208, x: 0.40,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
+          # - { name: l209, x: 0.45,  y: 0.0, z:  0.25, radius: 0.05, priority: 5 }
 
   collision_groups:
     - name: planar_arm

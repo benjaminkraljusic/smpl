@@ -680,9 +680,12 @@ bool SelfCollisionModel::checkRobotVoxelsStateCollisions(double& dist)
     return res;
 }
 
-// BENO 01/25
-// If a robot is in collision 0.0 is returned.
+// BENO 02/25
+// If a robot is in collision -> 0.0 is returned.
 double SelfCollisionModel::getCollisionDistance() {
+    // Check distance to collision for all the leaves in the sphere tree.
+    // Return the minimum distance.
+
     auto& q = m_vq;
     q.clear();
     for (const int ssidx : m_rcs.groupSpheresStateIndices(m_gidx)) {
@@ -692,42 +695,27 @@ double SelfCollisionModel::getCollisionDistance() {
     }
 
     double d_c = std::numeric_limits<double>::infinity(); // Minimum workspace distance
-    double d = std::numeric_limits<double>::infinity();
 
     while (!q.empty()) {
+        
         const CollisionSphereState* s = q.back();
         q.pop_back();
         // update non-meta states
         if (s->parent_state->index != -1) {
             m_rcs.updateSphereState(SphereIndex(s->parent_state->index, s->index()));
         }
-        ROS_DEBUG_NAMED(SCM_LOGGER, "Checking sphere with radius %0.3f at (%0.3f, %0.3f, %0.3f)", s->model->radius, s->pos.x(), s->pos.y(), s->pos.z());
-
-        // m_lock.lock();
-        double obs_dist = SphereCollisionDistance(*m_grid, *s, m_padding);
-        // m_lock.unlock();
-
-        if (obs_dist < 0)
-            return 0.0;
-
-        if (obs_dist < d_c)
-            d_c = obs_dist;
-
-        if (obs_dist >= d) {
-            continue; // further -> ok!
-        }
-
-        const double alpha = 0.5;
-        d = std::max(0.0, (1.0 - alpha) * obs_dist);
-        if (d == 0.0) {
-            // can't lower separation distance further -> done!
-            q.clear();
-            continue;
-        }
-
-        // collision -> not ok or recurse!
 
         if (s->isLeaf()) {
+            // Sphere collision distance
+            double obs_dist = SphereCollisionDistance(*m_grid, *s, m_padding);
+            
+            // collision
+            if (obs_dist < 0) 
+                return 0.0; 
+            
+            if (obs_dist < d_c)
+                d_c = obs_dist;
+
             if (s->parent_state->index == -1) {
                 // meta-leaf -> recurse on existing children of referenced
                 // sphere tree root state
@@ -765,9 +753,10 @@ double SelfCollisionModel::getCollisionDistance() {
                 q.push_back(s->left);
                 q.push_back(s->right);
             }
+            continue;
         }
     }
-    ROS_DEBUG_NAMED(SCM_LOGGER, "voxels distance = %0.3f", d);
+
     return d_c;
 }
 
@@ -1532,11 +1521,10 @@ double SelfCollisionModel::robotVoxelsCollisionDistance()
         }
 
         ROS_DEBUG_NAMED(SCM_LOGGER, "Checking sphere with radius %0.3f at (%0.3f, %0.3f, %0.3f)", s->model->radius, s->pos.x(), s->pos.y(), s->pos.z());
-
+       
         // m_lock.lock();
         double obs_dist = SphereCollisionDistance(*m_grid, *s, m_padding);
         // m_lock.unlock();
-
         if (obs_dist >= d) {
             continue; // further -> ok!
         }
