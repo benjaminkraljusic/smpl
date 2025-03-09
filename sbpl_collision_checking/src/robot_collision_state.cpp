@@ -192,7 +192,6 @@ auto RobotCollisionState::getVisualization(int gidx) const
 {
     ASSERT_VECTOR_RANGE(m_group_states, gidx);
     const CollisionGroupState& group_state = m_group_states[gidx];
-
     std::vector<std::vector<double>> spheres;
     std::vector<double> rad;
 
@@ -226,6 +225,50 @@ auto RobotCollisionState::getVisualization(int gidx) const
             spheres, rad, hue, "", "collision_model", 0);
 }
 
+// auto RobotCollisionState::getVisualizationBENOTEST(int gidx) const
+//     -> visualization_msgs::MarkerArray
+// {
+//     ASSERT_VECTOR_RANGE(m_group_states, gidx);
+//     const CollisionGroupState& group_state = m_group_states[gidx];
+//     std::vector<std::vector<double>> spheres;
+//     std::vector<double> rad;
+
+//     size_t sphere_count = 0;
+//     for (int ssidx : group_state.spheres_indices) {
+//         const CollisionSpheresState& spheres_state = m_spheres_states[ssidx];
+//         sphere_count += spheres_state.spheres.size();
+//     }
+
+//     spheres.reserve(sphere_count);
+//     rad.reserve(sphere_count);
+//     std::cout << "PREBROJO SAM SFERA: " << sphere_count << std::endl;
+//     std::cout << "group_state.spheres_indices: " << group_state.spheres_indices << std::endl;
+//     for (int ssidx : group_state.spheres_indices) {
+//         const CollisionSpheresState& spheres_state = m_spheres_states[ssidx];
+//         for (const CollisionSphereState& sphere_state : spheres_state.spheres) {
+//             std::cout << "STATE: " << sphere_state << std::endl;
+//             if (!sphere_state.isLeaf()) {
+//                 std::cout << "NIJE LEAF" << std::endl;
+//                 continue;
+//             }
+
+//             std::cout << "GLEDAM SFERU VIZUALIZACIJA" << std::endl;
+//             std::cout << sphere_state << std::endl;
+
+//             std::vector<double> sphere(4, 0.0);
+//             sphere[0] = sphere_state.pos.x();
+//             sphere[1] = sphere_state.pos.y();
+//             sphere[2] = sphere_state.pos.z();
+//             sphere[3] = sphere_state.model->radius;
+//             spheres.push_back(std::move(sphere));
+//             rad.push_back(sphere_state.model->radius);
+//         }
+//     }
+
+//     const int hue = 90;
+//     return viz::getSpheresMarkerArray(
+//             spheres, rad, hue, "", "collision_model", 0);
+// }
 void RobotCollisionState::initRobotState()
 {
     // NOTE: need to initialize this before determining per-joint offsets below
@@ -415,6 +458,58 @@ bool RobotCollisionState::checkCollisionStateReferences() const
     }
 
     return true;
+}
+
+// Current implementation works only for planar robots.
+auto RobotCollisionState::computeSkeleton(int gidx) -> Eigen::MatrixXd {
+
+    Eigen::MatrixXd skeleton(3, m_model->jointCount() - 1);
+    Eigen::MatrixXd skeleton2(3, m_model->jointCount() - 1);
+    
+    int lidx;
+
+    // for(lidx = 1; lidx < m_model->linkCount() - 1; lidx++) { // Skipping the base link
+    //     for(auto sphere_state : m_link_spheres_states.at(lidx)->spheres) {
+    //         if(sphere_state.isLeaf()) {
+    //             skeleton2.col(lidx - 1) << sphere_state.pos.x(), sphere_state.pos.y(), sphere_state.pos.z();
+    //             break;
+    //         }
+    //     }
+    // }
+
+    //  // The last sphere of the last link -> manipulator tip
+    // skeleton2.col(lidx - 1) << m_link_spheres_states.at(lidx - 1)->spheres.back().pos.x(), m_link_spheres_states.at(lidx - 1)->spheres.back().pos.y(), m_link_spheres_states.at(lidx - 1)->spheres.back().pos.z();
+
+    // std::cout << "SKELETON2" << std::endl << skeleton2 << std::endl;
+
+    auto indices = getLinkLeafSpheresIndices(gidx);
+
+    for(int i = 0; i < indices.size(); i++) {
+        std::cout << "INDICES[" << i << "]" << std::endl;
+        std::cout << indices.at(i) << std::endl;; 
+    }
+
+    for(lidx = 1; lidx < m_model->linkCount() - 1; lidx++) { // Skipping the base link (and tool for now) 
+        auto sphere_state = m_spheres_states.at(lidx).spheres.at(indices.at(lidx).at(0));
+        std::cout << "PISEM U SKELETON OD" << lidx - 1 << std::endl;
+        skeleton.col(lidx - 1) << sphere_state.pos.x(), sphere_state.pos.y(), sphere_state.pos.z();
+    }
+
+     std::cout << "PISEM U SKELETON OD" << lidx - 1 << std::endl;
+
+    // The last sphere of the last link -> manipulator tip
+    skeleton.col(lidx - 1) << m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.x(), m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.y(), m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.z();
+    
+    // std::cout << "ISPISUJEM SVE LEAF SFERE: " << std::endl;
+    // for(lidx = 1; lidx < m_model->linkCount() - 1; lidx++) { 
+    //     std::cout << "LINK " << lidx << std::endl;
+    //     for(int idx : indices.at(lidx)) {
+    //         auto sphere_state = m_link_spheres_states.at(lidx)->spheres.at(indices.at(lidx).at(0));
+    //         std::cout << sphere_state.pos.x() << " " <<  sphere_state.pos.y() << " " << sphere_state.pos.z() << std::endl;
+    //     }
+    // }
+
+    return skeleton;
 }
 
 } // namespace collision

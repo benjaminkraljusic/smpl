@@ -130,7 +130,12 @@ public:
     auto getVisualization(const std::string& group_name) const
         -> visualization_msgs::MarkerArray;
     auto getVisualization(int gidx) const -> visualization_msgs::MarkerArray;
+    // auto getVisualizationBENOTEST(int gidx) const -> visualization_msgs::MarkerArray;
 
+    auto computeSkeleton(int gidx) -> Eigen::MatrixXd;
+    auto getLinkLeafSpheresIndices(int gidx) -> const std::vector<std::vector<int>>&;
+    auto getSpheresStates() const -> const std::vector<CollisionSpheresState>*;
+    auto getGroupStates(int gidx) -> const CollisionGroupState&;
 private:
 
     const RobotCollisionModel*              m_model;
@@ -163,6 +168,8 @@ private:
 
     std::vector<int> m_q;
     std::vector<int> m_ancestors;
+
+    std::vector<std::vector<int>> m_link_leaf_spheres_indices;
     ///@}
 
     void initRobotState();
@@ -592,6 +599,44 @@ inline auto RobotCollisionState::getVisualization(
 {
     const int gidx = m_model->groupIndex(group_name);
     return getVisualization(gidx);
+}
+
+inline auto RobotCollisionState::getSpheresStates() const -> const std::vector<CollisionSpheresState>* {
+    return &m_spheres_states;
+}
+
+inline auto RobotCollisionState::getGroupStates(int gidx) -> const CollisionGroupState& {
+    updateSphereStates();
+    return m_group_states[gidx];
+}
+
+// For each link, get a vector of indices of all the leaf spheres.
+inline auto RobotCollisionState::getLinkLeafSpheresIndices(int gidx) -> const std::vector<std::vector<int>>& {
+    // If it exists, return it.
+    if(!m_link_leaf_spheres_indices.empty())
+        return m_link_leaf_spheres_indices;
+
+    m_link_leaf_spheres_indices = std::vector<std::vector<int>>(m_model->linkCount());
+
+    const CollisionGroupState& group_state = m_group_states[gidx];
+
+    for (int ssidx : group_state.spheres_indices) {
+        int idx_tmp = 0;
+        const CollisionSpheresState& spheres_state = m_spheres_states[ssidx];
+        for (const CollisionSphereState& sphere_state : spheres_state.spheres) {
+        
+            if (!sphere_state.isLeaf()) {
+                idx_tmp++;
+                continue;
+            }
+
+            // LEAF -> add the index
+            m_link_leaf_spheres_indices.at(ssidx).push_back(idx_tmp);
+            idx_tmp++;
+        }
+    }
+
+    return m_link_leaf_spheres_indices;
 }
 
 } // namespace collision

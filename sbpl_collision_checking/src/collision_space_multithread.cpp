@@ -726,6 +726,7 @@ bool CollisionSpaceMultithread::withinJointPositionLimits(
     return true;
 }
 
+// Compute the distance from a robot to the closest obstacle.
 double CollisionSpaceMultithread::distanceToCollision(int thread_idx, const std::vector<double>& state)
 {
     updateState(thread_idx, state);

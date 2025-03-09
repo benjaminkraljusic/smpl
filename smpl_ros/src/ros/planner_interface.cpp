@@ -243,7 +243,7 @@ void PlannerInterface::construct()
         const PlanningParams& p)
     {
         for (int i = 0; i < m_grid_vec.size(); ++i)
-            return MakeManipLatticeDist(r, c, p, m_grid_vec[i]); // This will be changed, only used temporarily for debugging purposes.
+            return MakeManipLatticeDist(r, c, p, m_grid_vec[i]); 
     };
     //
 
