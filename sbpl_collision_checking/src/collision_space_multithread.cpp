@@ -730,7 +730,21 @@ bool CollisionSpaceMultithread::withinJointPositionLimits(
 double CollisionSpaceMultithread::distanceToCollision(int thread_idx, const std::vector<double>& state)
 {
     updateState(thread_idx, state);
-    return m_scm[thread_idx]-> getCollisionDistance();
+    auto d_c = m_scm[thread_idx]-> getCollisionDistance(*m_rcs[thread_idx], m_gidx);
+    std::cout << "COLLISION MULTITHREAD: state: " << state << std::endl;
+    std::cout << "COLLISION MULTITHREAD: d_c = " <<  d_c << std::endl; 
+    return d_c;
+   // return m_scm[thread_idx]-> getCollisionDistance();
+}
+
+Eigen::MatrixXd CollisionSpaceMultithread::computeSkeleton(int thread_idx, const std::vector<double>& state)
+{
+    updateState(thread_idx, state);
+    return m_rcs[thread_idx]->computeSkeleton(m_gidx);
+}
+
+std::vector<double> CollisionSpaceMultithread::getCollisionSpheresRadii() {
+    return m_rcs[0]->getCollisionSpheresRadii(m_gidx);
 }
 
 // auto BuildCollisionSpace(

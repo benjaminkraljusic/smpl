@@ -190,8 +190,12 @@ public:
     double collisionDistance(int thread_idx, const std::vector<double>& state);
     double collisionDistance(int thread_idx, const double* state);
 
+    // BENO 03/2025
     double distanceToCollision(int thread_idx, const std::vector<double>& state);
-    
+    Eigen::MatrixXd computeSkeleton(int thread_idx, const std::vector<double>& state);
+    std::vector<double> getCollisionSpheresRadii();
+    // BENO 03/2025
+
     bool collisionDetails(
         int thread_idx,
         const std::vector<double>& state,

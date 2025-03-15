@@ -135,6 +135,8 @@ public:
     auto getLinkLeafSpheresIndices(int gidx) -> const std::vector<std::vector<int>>&;
     auto getSpheresStates() const -> const std::vector<CollisionSpheresState>*; // Has to return pointer because of the leaf sphere checks
     auto getGroupStates(int gidx) -> const CollisionGroupState&;
+    auto getCollisionSpheresRadii(int gidx) -> std::vector<double>;
+
 private:
 
     const RobotCollisionModel*              m_model;

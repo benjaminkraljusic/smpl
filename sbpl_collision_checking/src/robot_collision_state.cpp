@@ -418,17 +418,13 @@ bool RobotCollisionState::checkCollisionStateReferences() const
 
 // Current implementation works only for planar robots.
 auto RobotCollisionState::computeSkeleton(int gidx) -> Eigen::MatrixXd {
-
+    updateSphereStates();
+    
     Eigen::MatrixXd skeleton(3, m_model->jointCount() - 1);
-    Eigen::MatrixXd skeleton2(3, m_model->jointCount() - 1);
     
     int lidx;
 
     auto indices = getLinkLeafSpheresIndices(gidx);
-
-    for(int i = 0; i < indices.size(); i++) {
-        std::cout << indices.at(i) << std::endl;; 
-    }
 
     for(lidx = 1; lidx < m_model->linkCount() - 1; lidx++) { // Skipping the base link (and tool for now) 
         auto sphere_state = m_spheres_states.at(lidx).spheres.at(indices.at(lidx).at(0));
@@ -439,6 +435,18 @@ auto RobotCollisionState::computeSkeleton(int gidx) -> Eigen::MatrixXd {
     skeleton.col(lidx - 1) << m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.x(), m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.y(), m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.z();
     
     return skeleton;
+}
+
+auto RobotCollisionState::getCollisionSpheresRadii(int gidx) -> std::vector<double> {
+    auto indices = getLinkLeafSpheresIndices(gidx);
+
+    std::vector<double> spheres_radii(indices.size() - 2); // TODO: Fix it to be -1 you know what to do.
+
+    for(int lidx = 1; lidx < m_model->linkCount() - 1; lidx++) { // Skipping the base link (and tool for now) 
+       spheres_radii.at(lidx - 1) = m_spheres_states.at(lidx).spheres.at(indices.at(lidx).at(0)).model->radius;
+    }
+
+    return spheres_radii;
 }
 
 } // namespace collision

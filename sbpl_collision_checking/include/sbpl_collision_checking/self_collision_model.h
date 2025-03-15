@@ -132,7 +132,7 @@ public:
         CollisionDetails& details);
 
     // BENO 01/25
-    double getCollisionDistance();
+    double getCollisionDistance(const RobotCollisionState& state, int gidx);
     
     // TODO: contacts checks
     // TODO: detailed checks

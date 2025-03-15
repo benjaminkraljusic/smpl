@@ -103,10 +103,9 @@ public:
     ///@}
 
     // // BENO 01/2025.
-    // virtual double collisionDistance(const RobotState& state){};
-    // virtual double collisionDistance(int thread_idx, const RobotState& state){};
-
     virtual double distanceToCollision(int thread_idx, const std::vector<double>& state){};
+    virtual Eigen::MatrixXd computeSkeleton(int thread_idx, const std::vector<double>& state){};
+    virtual std::vector<double> getCollisionSpheresRadii(){};
 };
 
 class CollisionDistanceExtension : public virtual Extension

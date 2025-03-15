@@ -682,13 +682,16 @@ bool SelfCollisionModel::checkRobotVoxelsStateCollisions(double& dist)
 
 // BENO 02/25
 // If a robot is in collision -> 0.0 is returned.
-double SelfCollisionModel::getCollisionDistance() {
+double SelfCollisionModel::getCollisionDistance(const RobotCollisionState& state, int gidx) {
     // Check distance to collision for all the leaves in the sphere tree.
     // Return the minimum distance.
 
-    double d_c = std::numeric_limits<double>::infinity(); // Minimum workspace distance
+    // std::cout << "Pripremam ovo stanje " << state << std::endl;
+    prepareState(gidx, state.getJointVarPositions());
 
-    const CollisionGroupState& group_state = m_rcs.getGroupStates(m_gidx);
+    double d_c = std::numeric_limits<double>::infinity(); // Minimum workspace distance
+    
+    const CollisionGroupState& group_state = m_rcs.getGroupStates(gidx);
     auto spheres_states = m_rcs.getSpheresStates();
 
     for (int ssidx : group_state.spheres_indices) {
@@ -711,10 +714,8 @@ double SelfCollisionModel::getCollisionDistance() {
         }
     }
     
-    auto skeleton = m_rcs.computeSkeleton(m_gidx);
-    std::cout << "SKELETON: " << std::endl;
-    std::cout << skeleton << std::endl;
-    
+    std::cout << "IZRACUNAO SAM d_c [scm]: " << d_c << std::endl;
+
     return d_c;
 }
 

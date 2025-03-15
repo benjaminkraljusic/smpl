@@ -190,7 +190,8 @@ public:
     //==============================================================
 
     //BENO 01/25
-    std::vector<ManipLatticeState*>& getStates();
+    std::vector<ManipLatticeState*> getStates();
+    ManipLatticeState* getState(int state_id) { return m_states[state_id]; };
     ActionSpace* getActions();
     
 protected:

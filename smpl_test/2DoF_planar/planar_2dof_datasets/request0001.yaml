@@ -5,18 +5,18 @@ workspace_parameters:
   max_corner: [1, 1, 1]
 group_name: planar_arm
 num_planning_attempts: 1
-allowed_planning_time: 60
+allowed_planning_time: 0.05
 max_velocity_scaling_factor: 0
 max_acceleration_scaling_factor: 0
 goal_constraints:
   - joint_constraints:
       - joint_name: joint1
-        position: -1.570796 # 1.570796326794896619231321691639
+        position: 3.1415 # 1.570796326794896619231321691639
       - position: 0
         joint_name: joint2
 start_state:
   joint_state:
-    position: [-1.570796, 0]
+    position: [0, 0]
     name: [joint1, joint2]
     header:
       frame_id: base_link
