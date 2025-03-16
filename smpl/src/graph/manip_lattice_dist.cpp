@@ -52,7 +52,7 @@ void ManipLatticeDist::GetSuccs(
     }
 
     auto m_states = getStates();
-    ManipLatticeState* parent_entry = m_states[state_id];
+    ManipLatticeState* parent_entry = (*m_states)[state_id];
 
     //Getting collision distance
     double d_c = collisionChecker()->distanceToCollision(0, parent_entry->state);
@@ -116,19 +116,9 @@ void ManipLatticeDist::GetSuccs(
     }
 
     ManipLatticeState* parent_entry = (*m_states)[state_id];
-    // ManipLatticeState* parent_entry = getState(state_id);
 
-    // std::cout << "TRENUTNA d_c: " << d_c << std::endl;
-    // std::cout << "RODITELJ: " << parent_entry->state << std::endl;
-    // Getting minimum distance to an obstacle in the workspace
     this->d_c = collisionChecker()->distanceToCollision(0, parent_entry->state);
 
-    // std::cout << "UZEO SAM DISTANCU" << std::endl;
-    // std::cout << "d_c = " << d_c << std::endl;
-    // if(d_c < 0.02) {
-    //     std::cout << "PRESKACEM" << std::endl;
-    //     return;
-    // }
     int goal_succ_count = 0;
 
     // Generate states towards which bur spines are extended
@@ -144,10 +134,6 @@ void ManipLatticeDist::GetSuccs(
 
     // Try expanding towards the goal state every time - snap it if you are close
     q_es.push_back(goal().angles);
-   // std::cout << "CILJ: " << goal().angles << std::endl;
-    // TODO: every q_e in q_es should be rotated in the space so that bur doesn't coincide with bubble
-
-    // std::cout << "Evo q_esova: " << std::endl << q_es << std::endl;
         
     // Generate bur in m_states[state_id]
     RobotState q_new(parent_entry->state.size());
@@ -248,11 +234,11 @@ RobotState ManipLatticeDist::extendSpine(RobotState q, RobotState q_e) {
         // std::cout << "step: " << step << std::endl;
 
 		if (step > 1) {
-			Eigen::Map<Eigen::VectorXd>(q_new.data(), q_new.size()) = wrapState(q_eVec);
+			Eigen::Map<Eigen::VectorXd>(q_new.data(), q_new.size()) = q_eVec;
             break;
         }
 		else
-			q_newVec = wrapState(q_tempVec + step * (q_eVec - q_tempVec));     
+			q_newVec = q_tempVec + step * (q_eVec - q_tempVec);     
         
         // q_newVec = wrapState(q_newVec);
 
