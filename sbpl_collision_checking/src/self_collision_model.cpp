@@ -689,6 +689,14 @@ double SelfCollisionModel::getCollisionDistance(const RobotCollisionState& state
     // std::cout << "Pripremam ovo stanje " << state << std::endl;
     prepareState(gidx, state.getJointVarPositions());
 
+    // auto jp = state.getJointVarPositions();
+    // std::cout << "Joint var count: " << m_rcm->jointVarCount() << std::endl;
+    // std::cout << "STATE Joint var positions [m_rcs]: " << std::endl;
+    // for(int i = 0; i < m_rcm->jointVarCount(); i++) {
+    //     std::cout << "Joint name: " << m_rcm->jointVarName(i) << std::endl;
+    //     std::cout << jp[i] << std::endl;
+    // }
+
     double d_c = std::numeric_limits<double>::infinity(); // Minimum workspace distance
     
     const CollisionGroupState& group_state = m_rcs.getGroupStates(gidx);
@@ -703,105 +711,23 @@ double SelfCollisionModel::getCollisionDistance(const RobotCollisionState& state
             }
 
             // Sphere collision distance
-            double obs_dist = SphereCollisionDistance(*m_grid, sphere_state, m_padding);
+            double obs_dist = SphereCollisionDistance(*m_grid, sphere_state, 0.0);
 
             // collision
-            if (obs_dist < 0) 
+            if (obs_dist < 0) {
+              //  std::cout << "Collision, sphere: " << sphere_state << std::endl;
                 return 0.0; 
+            }
             
             if (obs_dist < d_c)
                 d_c = obs_dist;
         }
     }
     
-    std::cout << "IZRACUNAO SAM d_c [scm]: " << d_c << std::endl;
+    // std::cout << "IZRACUNAO SAM d_c [scm]: " << d_c << std::endl;
 
     return d_c;
 }
-
-// // BENO 02/25
-// // If a robot is in collision -> 0.0 is returned.
-// double SelfCollisionModel::getCollisionDistance() {
-//     // Check distance to collision for all the leaves in the sphere tree.
-//     // Return the minimum distance.
-
-//     auto& q = m_vq;
-//     q.clear();
-//    
-//     
-//     for (const int ssidx : m_rcs.groupSpheresStateIndices(m_gidx)) {
-//         const auto& ss = m_rcs.spheresState(ssidx);
-//         const CollisionSphereState* s = ss.spheres.root();
-//         q.push_back(s);
-//     }
-
-//     double d_c = std::numeric_limits<double>::infinity(); // Minimum workspace distance
-
-//     while (!q.empty()) {
-        
-//         const CollisionSphereState* s = q.back();
-//         q.pop_back();
-//         // update non-meta states
-//         if (s->parent_state->index != -1) {
-//             m_rcs.updateSphereState(SphereIndex(s->parent_state->index, s->index()));
-//         }
-
-//         if (s->isLeaf()) {
-//             // Sphere collision distance
-//             double obs_dist = SphereCollisionDistance(*m_grid, *s, m_padding);
-
-//             std::cout << "GLEDAM SFERU" << std::endl;
-//             std::cout << *s << std::endl;
-//             // collision
-//             if (obs_dist < 0) 
-//                 return 0.0; 
-            
-//             if (obs_dist < d_c)
-//                 d_c = obs_dist;
-
-//             if (s->parent_state->index == -1) {
-//                 // meta-leaf -> recurse on existing children of referenced
-//                 // sphere tree root state
-
-//                 // node connecting meta tree to kinematic tree
-//                 assert(s->left == s->right);
-//                 const CollisionSphereState* sl = s->left->left;
-//                 const CollisionSphereState* sr = s->right->right;
-
-//                 if (sl && sr) {
-//                     if (sl->model->radius > sr->model->radius) {
-//                         q.push_back(sr);
-//                         q.push_back(sl);
-//                     }
-//                     else {
-//                         q.push_back(sl);
-//                         q.push_back(sr);
-//                     }
-//                 }
-//                 else if (sl) {
-//                     q.push_back(sl);
-//                 }
-//                 else if (sr) {
-//                     q.push_back(sr);
-//                 }
-//             }
-//             // else continue checking other subtrees
-//         }
-//         else { // recurse on both the children
-//             if (s->left->model->radius > s->right->model->radius) {
-//                 q.push_back(s->right);
-//                 q.push_back(s->left);
-//             }
-//             else {
-//                 q.push_back(s->left);
-//                 q.push_back(s->right);
-//             }
-//             continue;
-//         }
-//     }
-
-//     return d_c;
-// }
 
 bool SelfCollisionModel::checkAttachedBodyVoxelsStateCollisions(
     double& dist)

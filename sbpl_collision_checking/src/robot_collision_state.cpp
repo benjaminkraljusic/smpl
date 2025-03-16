@@ -417,10 +417,11 @@ bool RobotCollisionState::checkCollisionStateReferences() const
 }
 
 // Current implementation works only for planar robots.
-auto RobotCollisionState::computeSkeleton(int gidx) -> Eigen::MatrixXd {
+auto RobotCollisionState::computeSkeleton(int gidx) -> std::pair<Eigen::MatrixXd, Eigen::MatrixXd> {
     updateSphereStates();
     
     Eigen::MatrixXd skeleton(3, m_model->jointCount() - 1);
+    Eigen::MatrixXd skeleton_padded(3, m_model->jointCount() - 2); // Farthests points on links
     
     int lidx;
 
@@ -428,13 +429,24 @@ auto RobotCollisionState::computeSkeleton(int gidx) -> Eigen::MatrixXd {
 
     for(lidx = 1; lidx < m_model->linkCount() - 1; lidx++) { // Skipping the base link (and tool for now) 
         auto sphere_state = m_spheres_states.at(lidx).spheres.at(indices.at(lidx).at(0));
+        
         skeleton.col(lidx - 1) << sphere_state.pos.x(), sphere_state.pos.y(), sphere_state.pos.z();
+        if(lidx >= 2) {
+            auto x = sphere_state.pos.x(); auto y = sphere_state.pos.y(); auto r = sphere_state.model->radius;
+            skeleton_padded.col(lidx - 2) << x + x/std::sqrt(x*x + y*y)*r, y + y/std::sqrt(x*x + y*y)*r, sphere_state.pos.z();
+        }
+       
     }
 
     // The last sphere of the last link -> "manipulator tip" (not really at the moment)
-    skeleton.col(lidx - 1) << m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.x(), m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.y(), m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.z();
-    
-    return skeleton;
+    auto x = m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.x();
+    auto y = m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.y();
+    auto z = m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.z();
+    auto r = m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).model->radius;
+    skeleton.col(lidx - 1) << x, y, z;
+    skeleton_padded.col(lidx - 2) << x + x/std::sqrt(x*x + y*y)*r, y + y/std::sqrt(x*x + y*y)*r, z;
+
+    return std::make_pair(skeleton, skeleton_padded);
 }
 
 auto RobotCollisionState::getCollisionSpheresRadii(int gidx) -> std::vector<double> {

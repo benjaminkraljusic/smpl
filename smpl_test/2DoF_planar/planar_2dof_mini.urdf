@@ -35,21 +35,27 @@
       <geometry>
         <sphere radius="0.05"/>
       </geometry>
-      <origin xyz="0.05 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+      <origin xyz="0.00 0.00 0.25" rpy="0.0 -0.0 0.0"/>
     </collision>
     <collision name="l102">
       <geometry>
         <sphere radius="0.05"/>
       </geometry>
-      <origin xyz="0.10 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+      <origin xyz="0.05 0.00 0.25" rpy="0.0 -0.0 0.0"/>
     </collision>
     <collision name="l103">
       <geometry>
         <sphere radius="0.05"/>
       </geometry>
-      <origin xyz="0.15 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+      <origin xyz="0.10 0.00 0.25" rpy="0.0 -0.0 0.0"/>
     </collision>
     <collision name="l104">
+      <geometry>
+        <sphere radius="0.05"/>
+      </geometry>
+      <origin xyz="0.15 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l105">
       <geometry>
         <sphere radius="0.05"/>
       </geometry>
@@ -73,21 +79,27 @@
       <geometry>
         <sphere radius="0.05"/>
       </geometry>
-      <origin xyz="0.05 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+      <origin xyz="0.00 0.00 0.25" rpy="0.0 -0.0 0.0"/>
     </collision>
     <collision name="l202">
       <geometry>
         <sphere radius="0.05"/>
       </geometry>
-      <origin xyz="0.10 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+      <origin xyz="0.05 0.00 0.25" rpy="0.0 -0.0 0.0"/>
     </collision>
     <collision name="l203">
       <geometry>
         <sphere radius="0.05"/>
       </geometry>
-      <origin xyz="0.15 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+      <origin xyz="0.10 0.00 0.25" rpy="0.0 -0.0 0.0"/>
     </collision>
     <collision name="l204">
+      <geometry>
+        <sphere radius="0.05"/>
+      </geometry>
+      <origin xyz="0.15 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l205">
       <geometry>
         <sphere radius="0.05"/>
       </geometry>

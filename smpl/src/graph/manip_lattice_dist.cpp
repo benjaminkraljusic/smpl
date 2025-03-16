@@ -33,10 +33,10 @@ bool ManipLatticeDist::init(
     ManipLattice::init(robot, checker, resolutions, actions);
     
     num_DOFs = RobotPlanningSpace::robot()->jointVariableCount(); 
-    m_num_spines = 2*num_DOFs;
+    m_num_spines = 2*num_DOFs + 1;
     m_spheres_radii = collisionChecker()->getCollisionSpheresRadii();
-    std::cout << "RADIJUSI SFERA: " << m_spheres_radii << std::endl;
-    d_c = 0.0;
+    m_states = getStates();
+    // std::cout << "RADIJUSI SFERA: " << m_spheres_radii << std::endl;
 }
 
 #ifndef DIST
@@ -55,9 +55,7 @@ void ManipLatticeDist::GetSuccs(
     ManipLatticeState* parent_entry = m_states[state_id];
 
     //Getting collision distance
-    std::cout << "RODITELJ: " << parent_entry->state << std::endl; 
     double d_c = collisionChecker()->distanceToCollision(0, parent_entry->state);
-    std::cout << "Hello from manip_latice_dist.cpp; d_c = " << d_c << std::endl;
     
     int goal_succ_count = 0;
 
@@ -99,7 +97,6 @@ void ManipLatticeDist::GetSuccs(
             succs->push_back(getGoalStateID());
         } else {
             succs->push_back(succ_state_id);
-            std::cout << "STANJE " << action.back() << std::endl;
         }
         costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
     }
@@ -118,17 +115,20 @@ void ManipLatticeDist::GetSuccs(
         return;
     }
 
-    auto m_states = getStates();
-    ManipLatticeState* parent_entry = m_states[state_id];
+    ManipLatticeState* parent_entry = (*m_states)[state_id];
     // ManipLatticeState* parent_entry = getState(state_id);
 
-    std::cout << "TRENUTNA d_c: " << d_c << std::endl;
-    std::cout << "RODITELJ: " << parent_entry->state << std::endl;
+    // std::cout << "TRENUTNA d_c: " << d_c << std::endl;
+    // std::cout << "RODITELJ: " << parent_entry->state << std::endl;
     // Getting minimum distance to an obstacle in the workspace
     this->d_c = collisionChecker()->distanceToCollision(0, parent_entry->state);
-    std::cout << "UZEO SAM DISTANCU" << std::endl;
-    std::cout << "d_c = " << d_c << std::endl;
 
+    // std::cout << "UZEO SAM DISTANCU" << std::endl;
+    // std::cout << "d_c = " << d_c << std::endl;
+    // if(d_c < 0.02) {
+    //     std::cout << "PRESKACEM" << std::endl;
+    //     return;
+    // }
     int goal_succ_count = 0;
 
     // Generate states towards which bur spines are extended
@@ -142,18 +142,42 @@ void ManipLatticeDist::GetSuccs(
         q_es.push_back(stateTmp);
     }
 
+    // Try expanding towards the goal state every time - snap it if you are close
+    q_es.push_back(goal().angles);
+   // std::cout << "CILJ: " << goal().angles << std::endl;
     // TODO: every q_e in q_es should be rotated in the space so that bur doesn't coincide with bubble
 
     // std::cout << "Evo q_esova: " << std::endl << q_es << std::endl;
-
+        
     // Generate bur in m_states[state_id]
-    RobotState q_new;
+    RobotState q_new(parent_entry->state.size());
     RobotCoord succ_coord(num_DOFs, 0);
 
     for(size_t i = 0; i < m_num_spines; i++) {
-        // Get q_new by extending the spine towards q_e = q_es[i]
-        q_new = extendSpine(parent_entry->state, q_es.at(i));
-        std::cout << "STANJE: " << q_new << std::endl;
+        
+        // If a minimum distance is too small -> use collision checking approach 
+        if(d_c < 0.01) {
+           // std::cout << "DESILO SE " << std::endl;
+            if(!addSuccWithCollisionCheck(parent_entry->state, q_es.at(i), &q_new))
+                continue;
+        } else {
+            // Get q_new by extending the spine towards q_e = q_es[i]
+            q_new = extendSpine(parent_entry->state, q_es.at(i));
+            
+            //std::cout << "DUZINA SPAJNA: " << (Eigen::VectorXd::Map(parent_entry->state.data(), parent_entry->state.size()) - Eigen::VectorXd::Map(q_new.data(), q_new.size())).norm() << std::endl;
+
+            // If a spine is too short - apply regular collision checking approach
+            if((Eigen::VectorXd::Map(parent_entry->state.data(), parent_entry->state.size()) - Eigen::VectorXd::Map(q_new.data(), q_new.size())).norm() < m_prim_len) {
+               // std::cout << "KRATAK SPAJN DO BOLA" << std::endl;
+                // If successor is in collision don't add it
+                if(!addSuccWithCollisionCheck(parent_entry->state, q_es.at(i), &q_new))
+                    continue;
+                
+            // std::cout << "COLLISION CHECK STATE: " << q_new << std::endl;
+            }
+        }
+
+        //std::cout << "STANJE: " << q_new << std::endl;
         // compute destination coords
         stateToCoord(q_new, succ_coord);
 
@@ -185,15 +209,15 @@ RobotState ManipLatticeDist::extendSpine(RobotState q, RobotState q_e) {
 	double rho(0), rho_k(0); 				        // The path length in W-space for (complete) robot
 	double step(0);
     size_t counter(0);
-
+        
 	// Eigen versions
     Eigen::VectorXd q_Vec = Eigen::VectorXd::Map(q.data(), q.size());
     Eigen::VectorXd q_tempVec = q_Vec;
 	Eigen::VectorXd q_eVec = Eigen::VectorXd::Map(q_e.data(), q_e.size());
     Eigen::VectorXd q_newVec;
 
-	Eigen::MatrixXd skeleton;
-	Eigen::MatrixXd skeleton_new;
+	// Eigen::MatrixXd skeleton;
+	// Eigen::MatrixXd skeleton_new;
 	Eigen::VectorXd delta_q;
     Eigen::VectorXd R;
     
@@ -201,15 +225,17 @@ RobotState ManipLatticeDist::extendSpine(RobotState q, RobotState q_e) {
     RobotState q_temp { q };
 
     //std::cout << "q.size(): " << q.size() << std::endl;
+    auto skeleton_pair = collisionChecker()->computeSkeleton(0, q_temp);
+    auto skeleton_pair_new = skeleton_pair;
 
     while (true) {   
-//        std::cout << "q_temp: " << q_temp << std::endl;
-        skeleton = collisionChecker()->computeSkeleton(0, q_temp);
-        // std::cout << "q_tempVec: " << std::endl << q_tempVec << std::endl;
-        // std::cout << "q_eVec: " << std::endl << q_eVec << std::endl; 
-        // std::cout << "SKELETON: " << std::endl << skeleton << std::endl;
+    //    std::cout << "q_temp: " << q_temp << std::endl;
+        
+      //  std::cout << "q_tempVec: " << std::endl << q_tempVec << std::endl;
+     //   std::cout << "q_eVec: " << std::endl << q_eVec << std::endl; 
+      //std::cout << "SKELETON: " << std::endl << skeleton << std::endl;
 
-        R = computeEnclosingRadii(skeleton);
+        R = computeEnclosingRadii(skeleton_pair_new.first);
 
         // std::cout << "Enclosing radii: " << std::endl << R << std::endl;
 
@@ -218,33 +244,31 @@ RobotState ManipLatticeDist::extendSpine(RobotState q, RobotState q_e) {
         // std::cout << "delta_q: " << std::endl << delta_q << std::endl;
 
 		step = (d_c - rho) / R.dot(delta_q);	// 'd_c - rho' is the remaining path length in W-space
-        
+        // std::cout << "PREOSTALA DISTANCA: " << d_c - rho << std::endl;
         // std::cout << "step: " << step << std::endl;
 
 		if (step > 1) {
 			Eigen::Map<Eigen::VectorXd>(q_new.data(), q_new.size()) = wrapState(q_eVec);
-            std::cout << "STEP JE BIO VECI OD JEDAN" << std::endl;
-            return q_new;
+            break;
         }
-		else {
-			q_newVec = q_tempVec + step * (q_eVec - q_tempVec);     
-        }
-
-        q_newVec = wrapState(q_newVec);
+		else
+			q_newVec = wrapState(q_tempVec + step * (q_eVec - q_tempVec));     
+        
+        // q_newVec = wrapState(q_newVec);
 
         // std::cout << "q_newVec: " << std::endl << q_newVec << std::endl;
 
         Eigen::Map<Eigen::VectorXd>(q_new.data(), q_new.size()) = q_newVec;
 		
-        if (counter++ == m_num_iter_spine)
-			return q_new;
+        if (++counter == m_num_iter_spine)
+			break;
 
-		skeleton_new = collisionChecker()->computeSkeleton(0, q_new);
+	    skeleton_pair_new = collisionChecker()->computeSkeleton(0, q_new);
 
-        // std::cout << "SKELETON NEW: " << std::endl << skeleton_new << std::endl;
-		
-		for (size_t k = 0; k < skeleton.cols(); k++) {
-			rho_k = (skeleton.col(k) - skeleton_new.col(k)).norm();
+       // std::cout << "SKELETON NEW: " << std::endl << skeleton_new << std::endl;
+	
+		for (size_t k = 0; k < skeleton_pair.second.cols(); k++) {
+			rho_k = (skeleton_pair.second.col(k) - skeleton_pair_new.second.col(k)).norm();
 			rho = std::max(rho, rho_k);
 		}
 
@@ -252,16 +276,17 @@ RobotState ManipLatticeDist::extendSpine(RobotState q, RobotState q_e) {
 		q_tempVec = q_newVec;
         q_temp = q_new;
 	}
+
+    return q_new;
 }
 
 Eigen::VectorXd ManipLatticeDist::computeEnclosingRadii(Eigen::MatrixXd skeleton) {
     Eigen::VectorXd radii(num_DOFs);
-    // std::cout << "Skeleton za racunanje: " << std::endl << skeleton << std::endl;
 	for (size_t i = 0; i < num_DOFs; i++) { 			// Starting point on skeleton
         std::vector<double> endpoint_row;
 
 		for (size_t j = i+1; j <= num_DOFs; j++)	// Final point on skeleton
-			endpoint_row.push_back((skeleton.col(j) - skeleton.col(i)).norm() + m_spheres_radii[j-1] + m_spheres_radii[i]);
+			endpoint_row.push_back((skeleton.col(j) - skeleton.col(i)).norm() + m_spheres_radii[j-1]); /*+ m_spheres_radii[i]*/
 
         // std::cout << "ENDPOINT ROW " << i << std::endl << endpoint_row << std::endl;       
         radii(i) = *std::max_element(endpoint_row.begin(), endpoint_row.end());
@@ -272,7 +297,7 @@ Eigen::VectorXd ManipLatticeDist::computeEnclosingRadii(Eigen::MatrixXd skeleton
 }
 
 Eigen::VectorXd ManipLatticeDist::wrapState(Eigen::VectorXd state) {
-
+    
     for (int i = 0; i < state.size(); ++i) {
         state(i) = fmod(state(i), M_PI);
         if (state(i) < -M_PI) {
@@ -281,8 +306,31 @@ Eigen::VectorXd ManipLatticeDist::wrapState(Eigen::VectorXd state) {
             state(i) -= M_PI;
         }
     }
-
+    
     return state;
+}
+
+bool ManipLatticeDist::addSuccWithCollisionCheck(
+    RobotState q,
+    RobotState q_e,  
+    RobotState* q_new) 
+{
+    Eigen::VectorXd q_Vec = Eigen::VectorXd::Map(q.data(), q.size());
+    Eigen::VectorXd q_eVec = Eigen::VectorXd::Map(q_e.data(), q_e.size());
+    Eigen::VectorXd q_newVec(q_Vec.size());
+
+    for(int i = 0; i < q_Vec.size(); i++)
+        q_newVec[i] = q_Vec[i] + (q_eVec - q_Vec)[i]/(q_eVec - q_Vec).norm()*m_prim_len;
+
+
+    Eigen::Map<Eigen::VectorXd>(q_new->data(), q_new->size()) = q_newVec;
+
+    // If the new state is not in collision -> ok
+    if(collisionChecker()->isStateToStateValid(q, *q_new))
+        return true;
+        
+    // New state in collision
+    return false;
 }
 
 }

@@ -24,22 +24,24 @@ public :
         ActionSpace* actions);
 
 private :
-    // std::mutex m_lock;
-    // std::vector<RobotState> q_e; // States to expand bur spines towards
+    std::vector<ManipLatticeState*>* m_states;
 
     size_t m_num_spines; // Number of bur spines 
     
     size_t num_DOFs;
     
-    double d_c; // Latest workspace collision distance
+    double d_c = 0; // Latest workspace collision distance
 
     RobotState extendSpine(RobotState q, RobotState q_e);
     Eigen::VectorXd computeEnclosingRadii(Eigen::MatrixXd skeleton);
     Eigen::VectorXd wrapState(Eigen::VectorXd state);
+    bool addSuccWithCollisionCheck(RobotState q, RobotState q_e, RobotState* q_new); 
 
     std::vector<double> m_spheres_radii;
 
     size_t m_num_iter_spine = 5;
+
+    double m_prim_len = 8.0/180*M_PI; // TODO: Load this externally from .mprim file
 };
 
 }

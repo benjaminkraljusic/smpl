@@ -192,7 +192,7 @@ public:
 
     // BENO 03/2025
     double distanceToCollision(int thread_idx, const std::vector<double>& state);
-    Eigen::MatrixXd computeSkeleton(int thread_idx, const std::vector<double>& state);
+    std::pair<Eigen::MatrixXd, Eigen::MatrixXd>  computeSkeleton(int thread_idx, const std::vector<double>& state);
     std::vector<double> getCollisionSpheresRadii();
     // BENO 03/2025
 

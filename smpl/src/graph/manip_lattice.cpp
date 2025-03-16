@@ -1412,9 +1412,9 @@ bool ManipLattice::setUserGoal(const GoalConstraint& goal)
 }
 
 // BENO 01/25
-std::vector<ManipLatticeState*> ManipLattice::getStates() 
+std::vector<ManipLatticeState*>* ManipLattice::getStates() 
 {
-    return m_states;
+    return &m_states;
 }
 
 ActionSpace* ManipLattice::getActions() 
