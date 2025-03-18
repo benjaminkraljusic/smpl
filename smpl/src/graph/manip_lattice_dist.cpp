@@ -33,7 +33,7 @@ bool ManipLatticeDist::init(
     ManipLattice::init(robot, checker, resolutions, actions);
     
     num_DOFs = RobotPlanningSpace::robot()->jointVariableCount(); 
-    m_num_spines = 2*num_DOFs + 1;
+    m_num_spines = 2*num_DOFs;
     m_spheres_radii = collisionChecker()->getCollisionSpheresRadii();
     m_states = getStates();
     // std::cout << "RADIJUSI SFERA: " << m_spheres_radii << std::endl;
@@ -132,8 +132,8 @@ void ManipLatticeDist::GetSuccs(
         q_es.push_back(stateTmp);
     }
 
-    // Try expanding towards the goal state every time - snap it if you are close
-    q_es.push_back(goal().angles);
+    // // Try expanding towards the goal state every time - snap it if you are close
+    // q_es.push_back(goal().angles);
         
     // Generate bur in m_states[state_id]
     RobotState q_new(parent_entry->state.size());
@@ -150,20 +150,15 @@ void ManipLatticeDist::GetSuccs(
             // Get q_new by extending the spine towards q_e = q_es[i]
             q_new = extendSpine(parent_entry->state, q_es.at(i));
             
-            //std::cout << "DUZINA SPAJNA: " << (Eigen::VectorXd::Map(parent_entry->state.data(), parent_entry->state.size()) - Eigen::VectorXd::Map(q_new.data(), q_new.size())).norm() << std::endl;
-
             // If a spine is too short - apply regular collision checking approach
             if((Eigen::VectorXd::Map(parent_entry->state.data(), parent_entry->state.size()) - Eigen::VectorXd::Map(q_new.data(), q_new.size())).norm() < m_prim_len) {
-               // std::cout << "KRATAK SPAJN DO BOLA" << std::endl;
                 // If successor is in collision don't add it
                 if(!addSuccWithCollisionCheck(parent_entry->state, q_es.at(i), &q_new))
                     continue;
-                
-            // std::cout << "COLLISION CHECK STATE: " << q_new << std::endl;
+        
             }
         }
 
-        //std::cout << "STANJE: " << q_new << std::endl;
         // compute destination coords
         stateToCoord(q_new, succ_coord);
 
@@ -186,13 +181,27 @@ void ManipLatticeDist::GetSuccs(
         }
         costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
     }
+
+    // Try connecting a spine with the goal
+    q_new = extendSpine(parent_entry->state, goal().angles);
+
+    // check if this state meets the goal criteria
+    auto is_goal_succ = isGoal(q_new);
+    int succ_state_id = getOrCreateState(succ_coord, q_new);
+    ManipLatticeState* succ_entry = getHashEntry(succ_state_id);
+    if (is_goal_succ) {
+        // update goal state
+        ++goal_succ_count;
+        succs->push_back(getGoalStateID());
+        costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
+    }
+    
 }
 
 #endif
 RobotState ManipLatticeDist::extendSpine(RobotState q, RobotState q_e) {
-    // Provjeri rho_profile zbog broja linkova
-    // std::vector<double> rho_profile(num_DOFs + 1);	// TODO: The path length in W-space for each robot's link. -2 for base link and tool. Will be fixed
-	double rho(0), rho_k(0); 				        // The path length in W-space for (complete) robot
+
+   double rho(0), rho_k(0); 				        // The path length in W-space for (complete) robot
 	double step(0);
     size_t counter(0);
         
@@ -202,8 +211,6 @@ RobotState ManipLatticeDist::extendSpine(RobotState q, RobotState q_e) {
 	Eigen::VectorXd q_eVec = Eigen::VectorXd::Map(q_e.data(), q_e.size());
     Eigen::VectorXd q_newVec;
 
-	// Eigen::MatrixXd skeleton;
-	// Eigen::MatrixXd skeleton_new;
 	Eigen::VectorXd delta_q;
     Eigen::VectorXd R;
     
@@ -215,23 +222,11 @@ RobotState ManipLatticeDist::extendSpine(RobotState q, RobotState q_e) {
     auto skeleton_pair_new = skeleton_pair;
 
     while (true) {   
-    //    std::cout << "q_temp: " << q_temp << std::endl;
-        
-      //  std::cout << "q_tempVec: " << std::endl << q_tempVec << std::endl;
-     //   std::cout << "q_eVec: " << std::endl << q_eVec << std::endl; 
-      //std::cout << "SKELETON: " << std::endl << skeleton << std::endl;
-
         R = computeEnclosingRadii(skeleton_pair_new.first);
-
-        // std::cout << "Enclosing radii: " << std::endl << R << std::endl;
 
 		delta_q = (q_eVec - q_tempVec).cwiseAbs();
 
-        // std::cout << "delta_q: " << std::endl << delta_q << std::endl;
-
 		step = (d_c - rho) / R.dot(delta_q);	// 'd_c - rho' is the remaining path length in W-space
-        // std::cout << "PREOSTALA DISTANCA: " << d_c - rho << std::endl;
-        // std::cout << "step: " << step << std::endl;
 
 		if (step > 1) {
 			Eigen::Map<Eigen::VectorXd>(q_new.data(), q_new.size()) = q_eVec;
@@ -239,10 +234,6 @@ RobotState ManipLatticeDist::extendSpine(RobotState q, RobotState q_e) {
         }
 		else
 			q_newVec = q_tempVec + step * (q_eVec - q_tempVec);     
-        
-        // q_newVec = wrapState(q_newVec);
-
-        // std::cout << "q_newVec: " << std::endl << q_newVec << std::endl;
 
         Eigen::Map<Eigen::VectorXd>(q_new.data(), q_new.size()) = q_newVec;
 		
@@ -250,15 +241,12 @@ RobotState ManipLatticeDist::extendSpine(RobotState q, RobotState q_e) {
 			break;
 
 	    skeleton_pair_new = collisionChecker()->computeSkeleton(0, q_new);
-
-       // std::cout << "SKELETON NEW: " << std::endl << skeleton_new << std::endl;
 	
 		for (size_t k = 0; k < skeleton_pair.second.cols(); k++) {
 			rho_k = (skeleton_pair.second.col(k) - skeleton_pair_new.second.col(k)).norm();
 			rho = std::max(rho, rho_k);
 		}
 
-        // std::cout << "rho: " << rho << std::endl; 
 		q_tempVec = q_newVec;
         q_temp = q_new;
 	}
@@ -274,11 +262,9 @@ Eigen::VectorXd ManipLatticeDist::computeEnclosingRadii(Eigen::MatrixXd skeleton
 		for (size_t j = i+1; j <= num_DOFs; j++)	// Final point on skeleton
 			endpoint_row.push_back((skeleton.col(j) - skeleton.col(i)).norm() + m_spheres_radii[j-1]); /*+ m_spheres_radii[i]*/
 
-        // std::cout << "ENDPOINT ROW " << i << std::endl << endpoint_row << std::endl;       
         radii(i) = *std::max_element(endpoint_row.begin(), endpoint_row.end());
 	}
 
-    // std::cout << "KAD TEK IZRACUNAM RADII: " << std::endl << radii << std::endl;
     return radii;
 }
 
