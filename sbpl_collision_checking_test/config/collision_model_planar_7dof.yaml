@@ -1,0 +1,110 @@
+# occupancy grid information
+world_collision_model:
+  size_x: 2.0
+  size_y: 2.0
+  size_z: 2.0
+  origin_x: 0.0
+  origin_y: 0.0
+  origin_z: 0.0
+  res_m: 0.02
+  max_distance_m: 2.0 
+
+robot_collision_model:
+  world_joint:
+    name: world_joint  # map(?)
+    type: planar  # fixed, floating
+ 
+  voxels_models:
+    - { link_name: base_link, res: 0.01 }
+    - { link_name: link1, res: 0.01 }
+    - { link_name: link2, res: 0.01 }
+    - { link_name: link3, res: 0.01 }
+    - { link_name: link4, res: 0.01 }
+    - { link_name: link5, res: 0.01 }
+    - { link_name: link6, res: 0.01 }
+    - { link_name: link7, res: 0.01 }
+  
+  spheres_models:
+    - link_name: base_link
+      auto: false
+      spheres:
+          - { name: l001, x:  0.0, y:  0.0, z:  0.1, radius: 0.1, priority: 5 }
+          
+    - link_name: link1
+      auto: false
+      spheres:
+          - { name: l101, x: 0.00,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l102, x: 0.02,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l103, x: 0.04,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l104, x: 0.06,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l105, x: 0.08,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+    
+    - link_name: link2
+      auto: false
+      spheres:
+          - { name: l201, x: 0.00,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l202, x: 0.02,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l203, x: 0.04,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l204, x: 0.06,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l205, x: 0.08,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+    
+    - link_name: link3
+      auto: false
+      spheres:
+          - { name: l301, x: 0.00,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l302, x: 0.02,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l303, x: 0.04,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l304, x: 0.06,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l305, x: 0.08,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+
+    - link_name: link4
+      auto: false
+      spheres:
+          - { name: l401, x: 0.00,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l402, x: 0.02,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l403, x: 0.04,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l404, x: 0.06,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l405, x: 0.08,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+
+    - link_name: link5
+      auto: false
+      spheres:
+          - { name: l501, x: 0.00,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l502, x: 0.02,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l503, x: 0.04,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l504, x: 0.06,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l505, x: 0.08,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+
+    - link_name: link6
+      auto: false
+      spheres:
+          - { name: l601, x: 0.00,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l602, x: 0.02,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l603, x: 0.04,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l604, x: 0.06,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l605, x: 0.08,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+
+    - link_name: link7
+      auto: false
+      spheres:
+          - { name: l701, x: 0.00,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l702, x: 0.02,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l703, x: 0.04,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l704, x: 0.06,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+          - { name: l705, x: 0.08,  y: 0.0, z:  0.25, radius: 0.02, priority: 5 }
+
+  collision_groups:
+    - name: planar_arm
+      links:
+        - name: base_link
+        - name: link1
+        - name: link2
+        - name: link3
+        - name: link4
+        - name: link5
+        - name: link6
+        - name: link7
+        
+              
+          
+          

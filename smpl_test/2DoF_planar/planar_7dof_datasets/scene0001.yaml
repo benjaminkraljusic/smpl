@@ -1,0 +1,83 @@
+robot_model_name: planar_2dof
+name: ""
+world:
+  collision_objects:
+    # - header:
+    #     frame_id: base_link
+    #   id: box1
+    #   primitives: 
+    #     - type: box
+    #       dimensions: [0.1, 0.1, 0.1]
+    #   primitive_poses:
+    #     - position: [0.25, 0.25, 0.25]
+    #       orientation: [0, 0, 0, 1]
+    # - header:
+    #     frame_id: base_link
+    #   id: box2
+    #   primitives:
+    #     - type: box
+    #       dimensions: [0.1, 0.1, 0.1]
+    #   primitive_poses:
+    #     - position: [-0.25, 0.25, 0.25]
+    #       orientation: [0, 0, 0, 1]  
+    # - header:
+    #     frame_id: base_link
+    #   id: sphere1
+    #   primitives: 
+    #     - type: sphere
+    #       dimensions: [0.1]
+    #   primitive_poses:
+    #     - position: [0.25, 0.25, 0.25]
+    #       orientation: [0, 0, 0, 1]
+    # - header:
+    #     frame_id: base_link
+    #   id: sphere2
+    #   primitives: 
+    #     - type: sphere
+    #       dimensions: [0.1]
+    #   primitive_poses:
+    #     - position: [-0.25, 0.25, 0.25]
+    #       orientation: [0, 0, 0, 1]
+    - header:
+        frame_id: base_link
+      id: box_easy
+      primitives:
+        - type: box
+          dimensions: [0.1, 0.1, 0.1]
+      primitive_poses:
+        - position: [0, 0.65, 0.25]
+          orientation: [0, 0, 0, 1]  
+    # - header:
+    #     frame_id: base_link
+      # id: box3
+      # primitives:
+      #   - type: box
+      #     dimensions: [0.1, 0.1, 0.1]
+      # primitive_poses:
+      #   - position: [0.9, 0.0, 0.25]
+      #     orientation: [0, 0, 0, 1]  
+
+fixed_frame_transforms:
+  - header:
+      frame_id: base_link
+    child_frame_id: base_link
+    transform:
+      translation: [0, 0, 0]
+      rotation: [0, 0, 0, 1]
+allowed_collision_matrix:
+  entry_values:
+    - [false, true, true, true, true, true, true, true]
+    - [true, false, true, true, true, true, true, true]
+    - [true, true, false, true, true, true, true, true]
+    - [true, true, true, false, true, true, true, true]
+    - [true, true, true, true, false, true, true, true]
+    - [true, true, true, true, true, false, true, true]
+    - [true, true, true, true, true, true, false, true]
+    - [true, true, true, true, true, true, true, false]
+  entry_names: [base_link, link1, link2, link3, link4, link5, link6, link7]
+robot_state:
+  joint_state:
+    position: [0, 0, 0, 0, 0, 0, 0]
+    name: [joint1, joint2, joint3, joint4, joint5, joint6, joint7]
+    header:
+      frame_id: base_link

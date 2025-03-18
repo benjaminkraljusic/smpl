@@ -1,0 +1,384 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<robot name="planar_6dof">
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.2" radius="0.1"/>
+      </geometry>
+      <material name="White">
+       <color rgba="1.0 1.0 1.0 1.0"/>
+      </material>
+    </visual>
+    <collision name="l001">
+      <geometry>
+        <sphere radius="0.05"/>
+      </geometry>
+      <origin xyz="0.00 0.00 0.10" rpy="0.0 0.0 0.0"/>
+    </collision>
+  </link>
+
+  <link name="link1">
+    <visual>
+      <origin xyz="0.05 0 0"/>
+      <geometry>
+        <box size="0.1 0.02 0.02"/>
+      </geometry>
+      <material name="Red">
+       <color rgba="0.9 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision name="l101">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.00 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l102">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.02 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l103">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.04 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l104">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.06 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l105">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.08 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+  </link>
+
+  <link name="link2">
+    <visual>
+      <origin xyz="0.05 0 0"/>
+      <geometry>
+        <box size="0.1 0.02 0.02"/>
+      </geometry>
+      <material name="Red">
+       <color rgba="0.9 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision name="l201">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.00 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l202">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.02 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l203">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.04 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l204">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.06 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l205">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.08 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+  </link>
+
+  <link name="link3">
+    <visual>
+      <origin xyz="0.05 0 0"/>
+      <geometry>
+        <box size="0.1 0.02 0.02"/>
+      </geometry>
+      <material name="Red">
+       <color rgba="0.9 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision name="l301">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.00 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l302">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.02 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l303">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.04 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l304">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.06 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l305">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.08 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+  </link>
+
+  <link name="link4">
+    <visual>
+      <origin xyz="0.05 0 0"/>
+      <geometry>
+        <box size="0.1 0.02 0.02"/>
+      </geometry>
+      <material name="Red">
+       <color rgba="0.9 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision name="l401">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.00 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l402">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.02 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l403">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.04 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l404">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.06 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l405">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.08 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+  </link>
+
+  <link name="link5">
+    <visual>
+      <origin xyz="0.05 0 0"/>
+      <geometry>
+        <box size="0.1 0.02 0.02"/>
+      </geometry>
+      <material name="Red">
+       <color rgba="0.9 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision name="l501">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.00 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l502">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.02 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l503">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.04 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l504">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.06 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l505">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.08 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+  </link>
+
+  <link name="link6">
+    <visual>
+      <origin xyz="0.05 0 0"/>
+      <geometry>
+        <box size="0.1 0.02 0.02"/>
+      </geometry>
+      <material name="Red">
+       <color rgba="0.9 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision name="l601">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.00 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l602">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.02 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l603">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.04 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l604">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.06 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l605">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.08 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+  </link>
+
+  <link name="link7">
+    <visual>
+      <origin xyz="0.05 0 0"/>
+      <geometry>
+        <box size="0.1 0.02 0.02"/>
+      </geometry>
+      <material name="Red">
+       <color rgba="0.9 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision name="l701">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.00 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l702">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.02 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l703">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.04 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l704">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.06 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+    <collision name="l705">
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <origin xyz="0.08 0.00 0.25" rpy="0.0 -0.0 0.0"/>
+    </collision>
+  </link>
+
+  <link name="tool"></link>
+
+<!-- Joints -->
+
+  <joint name="joint1" type="revolute">
+    <limit effort="30" velocity="1.0" lower="-3.14159" upper="3.14159" />
+    <parent link="base_link"/>
+    <child link="link1"/>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+  </joint>
+
+  <joint name="joint2" type="revolute">
+    <limit effort="30" velocity="1.0" lower="-3.14159" upper="3.14159" />
+    <parent link="link1"/>
+    <child link="link2"/>
+    <origin xyz="0.08 0 0" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+  </joint>
+
+  <joint name="joint3" type="revolute">
+    <limit effort="30" velocity="1.0" lower="-3.14159" upper="3.14159" />
+    <parent link="link2"/>
+    <child link="link3"/>
+    <origin xyz="0.08 0 0" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+  </joint>
+
+  <joint name="joint4" type="revolute">
+    <limit effort="30" velocity="1.0" lower="-3.14159" upper="3.14159" />
+    <parent link="link3"/>
+    <child link="link4"/>
+    <origin xyz="0.08 0 0" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+  </joint>
+
+  <joint name="joint5" type="revolute">
+    <limit effort="30" velocity="1.0" lower="-3.14159" upper="3.14159" />
+    <parent link="link4"/>
+    <child link="link5"/>
+    <origin xyz="0.08 0 0" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+  </joint>
+
+  <joint name="joint6" type="revolute">
+    <limit effort="30" velocity="1.0" lower="-3.14159" upper="3.14159" />
+    <parent link="link5"/>
+    <child link="link6"/>
+    <origin xyz="0.08 0 0" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+  </joint>
+
+  <joint name="joint7" type="revolute">
+    <limit effort="30" velocity="1.0" lower="-3.14159" upper="3.14159" />
+    <parent link="link6"/>
+    <child link="link7"/>
+    <origin xyz="0.08 0 0" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+  </joint>
+
+  <joint name="ee" type="fixed">
+    <parent link="link7" />
+    <child link="tool" />
+    <limit effort="30" velocity="1.0" lower="-6.28318" upper="6.28318" />
+    <origin xyz="0.1 0 0" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+  </joint>
+
+</robot>
