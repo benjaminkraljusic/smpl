@@ -417,7 +417,7 @@ bool RobotCollisionState::checkCollisionStateReferences() const
 }
 
 // Current implementation works only for planar robots.
-auto RobotCollisionState::computeSkeleton(int gidx) -> std::pair<Eigen::MatrixXd, Eigen::MatrixXd> {
+void RobotCollisionState::computeSkeleton(int gidx, std::shared_ptr<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> skeleton_pair_ptr) {
     updateSphereStates();
     
     Eigen::MatrixXd skeleton(3, m_model->jointCount() - 1);
@@ -446,7 +446,7 @@ auto RobotCollisionState::computeSkeleton(int gidx) -> std::pair<Eigen::MatrixXd
     skeleton.col(lidx - 1) << x, y, z;
     skeleton_padded.col(lidx - 2) << x + x/std::sqrt(x*x + y*y)*r, y + y/std::sqrt(x*x + y*y)*r, z;
 
-    return std::make_pair(skeleton, skeleton_padded);
+    *skeleton_pair_ptr = std::make_pair(skeleton, skeleton_padded);
 }
 
 auto RobotCollisionState::getCollisionSpheresRadii(int gidx) -> std::vector<double> {

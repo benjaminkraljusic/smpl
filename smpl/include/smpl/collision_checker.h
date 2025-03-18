@@ -102,9 +102,9 @@ public:
         -> std::vector<visual::Marker>;
     ///@}
 
-    // // BENO 01/2025.
+    // BENO 01/2025.
     virtual double distanceToCollision(int thread_idx, const std::vector<double>& state){};
-    virtual std::pair<Eigen::MatrixXd, Eigen::MatrixXd> computeSkeleton(int thread_idx, const std::vector<double>& state){};
+    virtual void computeSkeleton(int thread_idx, const std::vector<double>& state, std::shared_ptr<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> skeleton){};
     virtual std::vector<double> getCollisionSpheresRadii(){};
 };
 

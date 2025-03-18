@@ -737,10 +737,10 @@ double CollisionSpaceMultithread::distanceToCollision(int thread_idx, const std:
    // return m_scm[thread_idx]-> getCollisionDistance();
 }
 
-std::pair<Eigen::MatrixXd, Eigen::MatrixXd> CollisionSpaceMultithread::computeSkeleton(int thread_idx, const std::vector<double>& state)
+void CollisionSpaceMultithread::computeSkeleton(int thread_idx, const std::vector<double>& state, std::shared_ptr<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> skeleton_pair)
 {
     updateState(thread_idx, state);
-    return m_rcs[thread_idx]->computeSkeleton(m_gidx);
+    m_rcs[thread_idx]->computeSkeleton(m_gidx, skeleton_pair);
 }
 
 std::vector<double> CollisionSpaceMultithread::getCollisionSpheresRadii() {

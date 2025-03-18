@@ -228,8 +228,10 @@ void ManipLatticeDist::extendSpine(
     RobotState q_tempRS(q->size());
     Eigen::Map<Eigen::VectorXd>(q_tempRS.data(), q_tempRS.size()) = q_temp;
 
-    auto skeleton_pair = std::make_shared<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>>(collisionChecker()->computeSkeleton(0, q_tempRS));
-    auto skeleton_pair_new = std::make_shared<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>>(collisionChecker()->computeSkeleton(0, q_tempRS));
+    std::shared_ptr<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> skeleton_pair = std::make_shared<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>>(std::make_pair(Eigen::MatrixXd(3, num_DOFs + 1), Eigen::MatrixXd(3, num_DOFs))); 
+    collisionChecker()->computeSkeleton(0, q_tempRS, skeleton_pair);
+    std::shared_ptr<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> skeleton_pair_new = std::make_shared<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>>(std::make_pair(Eigen::MatrixXd(3, num_DOFs + 1), Eigen::MatrixXd(3, num_DOFs)));
+    collisionChecker()->computeSkeleton(0, q_tempRS, skeleton_pair_new);
 
     while (true) {   
         computeEnclosingRadii(std::make_shared<Eigen::MatrixXd>(skeleton_pair_new->first), R);
@@ -250,7 +252,7 @@ void ManipLatticeDist::extendSpine(
 
         Eigen::Map<Eigen::VectorXd>(q_newRS.data(), q_newRS.size()) = *q_new;
 
-	    *skeleton_pair_new = collisionChecker()->computeSkeleton(0, q_newRS);
+	    collisionChecker()->computeSkeleton(0, q_newRS, skeleton_pair_new);
 	
 		for (size_t k = 0; k < skeleton_pair->second.cols(); k++) {
 			rho_k = (skeleton_pair->second.col(k) - skeleton_pair_new->second.col(k)).norm();

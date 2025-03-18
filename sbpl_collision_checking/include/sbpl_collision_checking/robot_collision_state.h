@@ -131,7 +131,7 @@ public:
         -> visualization_msgs::MarkerArray;
     auto getVisualization(int gidx) const -> visualization_msgs::MarkerArray;
 
-    auto computeSkeleton(int gidx) -> std::pair<Eigen::MatrixXd, Eigen::MatrixXd>;
+    void computeSkeleton(int gidx, std::shared_ptr<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> skeleton_pair_ptr);
     auto getLinkLeafSpheresIndices(int gidx) -> const std::vector<std::vector<int>>&;
     auto getSpheresStates() const -> const std::vector<CollisionSpheresState>*; // Has to return pointer because of the leaf sphere checks
     auto getGroupStates(int gidx) -> const CollisionGroupState&;
