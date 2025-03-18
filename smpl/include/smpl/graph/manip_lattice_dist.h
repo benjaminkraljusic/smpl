@@ -26,16 +26,17 @@ public :
 private :
     std::vector<ManipLatticeState*>* m_states;
 
+    std::shared_ptr<Eigen::VectorXd> m_goal_vec{ nullptr };
+
     size_t m_num_spines; // Number of bur spines 
     
     size_t num_DOFs;
     
     double d_c = 0; // Latest workspace collision distance
 
-    RobotState extendSpine(RobotState q, RobotState q_e);
-    Eigen::VectorXd computeEnclosingRadii(Eigen::MatrixXd skeleton);
-    Eigen::VectorXd wrapState(Eigen::VectorXd state);
-    bool addSuccWithCollisionCheck(RobotState q, RobotState q_e, RobotState* q_new); 
+    void extendSpine(std::shared_ptr<Eigen::VectorXd> q, Eigen::VectorXd q_e, std::shared_ptr<Eigen::VectorXd> q_new);
+    void computeEnclosingRadii(std::shared_ptr<Eigen::MatrixXd> skeleton, std::shared_ptr<Eigen::VectorXd> R);
+    bool addSuccWithCollisionCheck(std::shared_ptr<Eigen::VectorXd> q, Eigen::VectorXd q_e, std::shared_ptr<Eigen::VectorXd> q_new); 
 
     std::vector<double> m_spheres_radii;
 
