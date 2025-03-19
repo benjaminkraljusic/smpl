@@ -4,7 +4,7 @@
     <arg name="debug"       default="false"/>
     <arg name="profile"     default="false"/>
     <arg name="fullscreen"  default="false"/>
-    <arg name="dataset"     default="$(find smpl_test)/2DoF_planar/planar_7dof_datasets"/>
+    <arg name="dataset"     default="$(find smpl_test)/planar_arm/planar_7dof_datasets"/>
     <arg name="problem_index"     default="4"/>
     <arg name="planner"     default="arastar"/>  <!-- options: arastar, epase -->
     <arg name="verbose"     default="false"/>
@@ -24,7 +24,7 @@
     <arg     if="$(arg fullscreen)" name="rviz-fullscreen" value="--fullscreen"/>
 
     <!-- robot description -->
-    <param name="robot_description" command="cat '$(find smpl_test)/2DoF_planar/planar_7dof.urdf'"/>
+    <param name="robot_description" command="cat '$(find smpl_test)/planar_arm/planar_7dof.urdf'"/>
 
     <!-- 0. RViz -->
     <node if="$(arg visualize)" type="rviz" name="rviz" pkg="rviz" args="-d $(find smpl_test)/config/config.rviz $(arg rviz-fullscreen)" output="screen"/>

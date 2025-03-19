@@ -12,6 +12,7 @@
     <arg name="reverse"     default="false"/>
     <arg name="check"       default="false"/>
     <arg name="args"        default=""/>
+    <arg name="planning_space" default="manip"/>
 
     <arg unless="$(arg debug)"   name="debug-prefix"   value=""/>
     <arg     if="$(arg debug)"   name="debug-prefix"   value="gdb -ex run --args"/>
@@ -61,5 +62,6 @@
         <param name="visualize" value="$(arg visualize)"/>
         <param name="reverse"   value="$(arg reverse)"/>
         <param name="check"     value="$(arg check)"/>
+        <param name="planning_space" value="$(arg planning_space)"/>
     </node>
 </launch>

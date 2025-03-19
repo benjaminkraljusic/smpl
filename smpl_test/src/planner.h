@@ -132,6 +132,8 @@ class Planner {
     smpl::OccupancyGrid * grid_;
     std::vector<smpl::OccupancyGrid *> grid_vec_;
     std::vector<moveit_msgs::CollisionObject> collision_objects_;
+
+    std::string planning_space_;
 };
 
 #endif

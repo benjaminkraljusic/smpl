@@ -121,8 +121,14 @@ bool Planner::initForProblemsDir(std::string const & problems_dir, bool reverse)
         ROS_ERROR("Failed to retrieve param 'num_threads' from the param server");
         return false;
     }
+
     if (verbose_) {
         ROS_INFO("num_threads: %d", num_threads_);
+    }
+
+    if(!ph_.getParam("planning_space", planning_space_)) {
+        ROS_ERROR("Failed to retrieve param 'planning_space' from the param server");
+        return false;    
     }
 
     // Everyone needs to know the name of the planning frame for
@@ -407,7 +413,7 @@ bool Planner::planForProblemIdx(int problem_index, bool check) {
     if (goal_type_ == "pose") {
         request_msg.planner_id = planning_algorithm_ + ".bfs.manip";
     } else if (goal_type_ == "joints") {
-        request_msg.planner_id = planning_algorithm_ + ".joint_distance_weighted.manip_dist";
+        request_msg.planner_id = planning_algorithm_ + ".joint_distance_weighted." + planning_space_;
     } else {
         ROS_ERROR("Goal type not identified!");
         return false;
@@ -816,7 +822,7 @@ bool Planner::setupPlannerParams(PlannerConfig & config) {
     planner_params_.addParam("repair_time", 1.0);
     planner_params_.addParam("bfs_inlation_radius", 0.02);
     planner_params_.addParam("bfs_cost_per_cell", 100);
-
+    planner_params_.addParam("planning_space", "manip");
     return true;
 }
 
