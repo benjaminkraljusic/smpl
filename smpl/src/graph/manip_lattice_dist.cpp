@@ -16,7 +16,6 @@
 #include <smpl/spatial.h>
 #include "../profiling.h"
 
-#define DIST 1
 namespace smpl {
 
 // BENO 02/25
@@ -38,71 +37,6 @@ bool ManipLatticeDist::init(
     m_states = getStates();    
 }
 
-#ifndef DIST
-void ManipLatticeDist::GetSuccs(
-        int state_id,
-        std::vector<int>* succs,
-        std::vector<int>* costs) 
-{
-   
-    // goal state should be absorbing
-    if (state_id == getGoalStateID()) {
-        return;
-    }
-
-    auto m_states = getStates();
-    ManipLatticeState* parent_entry = (*m_states)[state_id];
-
-    //Getting collision distance
-    double d_c = collisionChecker()->distanceToCollision(0, parent_entry->state);
-    
-    int goal_succ_count = 0;
-
-    std::vector<Action> actions;
-    if (!getActions()->apply(parent_entry->state, actions)) {
-        SMPL_WARN("Failed to get actions");
-        return;
-    }
-
-    // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "  actions: %zu", actions.size());
-
-    // check actions for validity
-    RobotCoord succ_coord(robot()->jointVariableCount(), 0);
-    for (size_t i = 0; i < actions.size(); ++i) {
-        auto& action = actions[i];
-
-        if (!checkAction(parent_entry->state, action)) {
-            continue;
-        }
-
-        // compute destination coords
-        stateToCoord(action.back(), succ_coord);
-
-        // get the successor
-
-        // check if hash entry already exists, if not then create one
-        int succ_state_id = getOrCreateState(succ_coord, action.back());
-        ManipLatticeState* succ_entry = getHashEntry(succ_state_id);
-
-        // check if this state meets the goal criteria
-        auto is_goal_succ = isGoal(action.back());
-        if (is_goal_succ) {
-            // update goal state
-            ++goal_succ_count;
-        }
-
-        // put successor on successor list with the proper cost
-        if (is_goal_succ) {
-            succs->push_back(getGoalStateID());
-        } else {
-            succs->push_back(succ_state_id);
-        }
-        costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
-    }
-
-}
-
-#else
 void ManipLatticeDist::GetSuccs(
         int state_id,
         std::vector<int>* succs,
@@ -116,9 +50,8 @@ void ManipLatticeDist::GetSuccs(
     }
 
     // goal state should be absorbing
-    if (state_id == getGoalStateID()) {
+    if (state_id == getGoalStateID())
         return;
-    }
 
     ManipLatticeState* parent_entry = (*m_states)[state_id];
 
@@ -134,7 +67,7 @@ void ManipLatticeDist::GetSuccs(
     std::vector<Eigen::VectorXd> q_es;
 
     for(size_t i = 0; i < parent_entry->state.size(); i++) {
-        Eigen::VectorXd stateTmp = *q; // Eigen::VectorXd::Map(parent_entry->state.data(), parent_entry->state.size());
+        Eigen::VectorXd stateTmp = *q; 
         stateTmp[i] = 2*M_PI; // state "infinitely far" along the i-th axis in the C-space
         q_es.push_back(stateTmp);
         stateTmp[i] = -2*M_PI;
@@ -152,73 +85,32 @@ void ManipLatticeDist::GetSuccs(
         if(d_c < 0.01) {
             if(!addSuccWithCollisionCheck(q, q_es.at(i), q_new))
                 continue;
-        } else {
+        } else 
             // Get q_new by extending the spine towards q_e = q_es[i]
-            extendSpine(q, q_es.at(i), q_new);
-            
-            // If a spine is too short - apply regular collision checking approach
-            if((*q - *q_new).norm() < m_prim_len) {
-                // If successor is in collision don't add it
-                if(!addSuccWithCollisionCheck(q, q_es.at(i), q_new))
-                    continue;
-        
-            }
-        }
-
-        // compute destination coords
-        RobotState q_newRS(q_new->size());
-        Eigen::Map<Eigen::VectorXd>(q_newRS.data(), q_newRS.size()) = *q_new;
-        stateToCoord(q_newRS, succ_coord);
-
-        // check if hash entry already exists, if not then create one
-        int succ_state_id = getOrCreateState(succ_coord, q_newRS);
-        ManipLatticeState* succ_entry = getHashEntry(succ_state_id);
-
-        // check if this state meets the goal criteria
-        auto is_goal_succ = isGoal(q_newRS);
-        if (is_goal_succ) {
-            // update goal state
-            ++goal_succ_count;
-        }
-
-        // put successor on successor list with the proper cost
-        if (is_goal_succ) {
-            succs->push_back(getGoalStateID());
-        } else {
-            succs->push_back(succ_state_id);
-        }
-        costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
+            extendSpine(parent_entry, q_es.at(i), q_new, succs, costs, false);
     }
 
-    // // Try expanding towards the goal state every time - snap it if you are close
-    extendSpine(q, *m_goal_vec, q_new);
-
-    RobotState q_newRS(q_new->size());
-    Eigen::Map<Eigen::VectorXd>(q_newRS.data(), q_newRS.size()) = *q_new;
-
-    // check if this state meets the goal criteria
-    auto is_goal_succ = isGoal(q_newRS);
-    int succ_state_id = getOrCreateState(succ_coord, q_newRS);
-    ManipLatticeState* succ_entry = getHashEntry(succ_state_id);
-    if (is_goal_succ) {
-        // update goal state
-        ++goal_succ_count;
-        succs->push_back(getGoalStateID());
-        costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
-    }
-    
+    // Try expanding towards the goal state every time - snap it if you are close
+    extendSpine(parent_entry, *m_goal_vec, q_new, succs, costs, true);
 }
 
-#endif
 void ManipLatticeDist::extendSpine(
-        std::shared_ptr<Eigen::VectorXd> q, 
+        ManipLatticeState* parent_entry, 
         Eigen::VectorXd q_e, 
-        std::shared_ptr<Eigen::VectorXd> q_new) 
+        std::shared_ptr<Eigen::VectorXd> q_new, 
+        std::vector<int>* succs,
+        std::vector<int>* costs,
+        bool is_q_e_goal) 
 {
     double rho(0), rho_k(0); 				        // The path length in W-space for (complete) robot
 	double step(0);
     size_t counter(0);
-        
+       
+    // Eigen vector representing the state to be expanded
+    std::shared_ptr<Eigen::VectorXd> q = std::make_shared<Eigen::VectorXd>(Eigen::VectorXd::Map(parent_entry->state.data(), parent_entry->state.size()));
+    int goal_succ_count = 0;
+    RobotCoord succ_coord(num_DOFs, 0);
+ 
     Eigen::VectorXd q_temp = *q;
 
 	Eigen::VectorXd delta_q;
@@ -261,7 +153,39 @@ void ManipLatticeDist::extendSpine(
 
 		q_temp = *q_new;
 
-	}
+	} // New state obtained
+
+    // If a spine is too short - apply regular collision checking approach
+    if((*q - *q_new).norm() < m_prim_len) {
+        // If successor is in collision don't add it
+        if(!addSuccWithCollisionCheck(q, q_e, q_new))
+            return;
+    }
+
+    // compute destination coords
+    Eigen::Map<Eigen::VectorXd>(q_newRS.data(), q_newRS.size()) = *q_new;
+    stateToCoord(q_newRS, succ_coord);
+
+    // check if hash entry already exists, if not then create one
+    int succ_state_id = getOrCreateState(succ_coord, q_newRS);
+    ManipLatticeState* succ_entry = getHashEntry(succ_state_id);
+
+    // check if this state meets the goal criteria
+    auto is_goal_succ = isGoal(q_newRS);
+
+    if (is_goal_succ) 
+        ++goal_succ_count; // update goal state
+
+    // put successor on successor list with the proper cost
+    if (is_goal_succ) {
+        succs->push_back(getGoalStateID());
+    } else {
+        if(is_q_e_goal) // Don't add states obtained by snapping unless the state is goal
+            return;
+        else 
+            succs->push_back(succ_state_id);
+    }
+    costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
 
 }
 

@@ -34,7 +34,7 @@ private :
     
     double d_c = 0; // Latest workspace collision distance
 
-    void extendSpine(std::shared_ptr<Eigen::VectorXd> q, Eigen::VectorXd q_e, std::shared_ptr<Eigen::VectorXd> q_new);
+    void extendSpine(ManipLatticeState* parent_entry, Eigen::VectorXd q_e, std::shared_ptr<Eigen::VectorXd> q_new, std::vector<int>* succs, std::vector<int>* costs, bool is_q_e_goal);
     void computeEnclosingRadii(std::shared_ptr<Eigen::MatrixXd> skeleton, std::shared_ptr<Eigen::VectorXd> R);
     bool addSuccWithCollisionCheck(std::shared_ptr<Eigen::VectorXd> q, Eigen::VectorXd q_e, std::shared_ptr<Eigen::VectorXd> q_new); 
 
