@@ -34,15 +34,17 @@ private :
     
     double d_c = 0; // Latest workspace collision distance
 
-    void extendSpine(ManipLatticeState* parent_entry, Eigen::VectorXd q_e, std::shared_ptr<Eigen::VectorXd> q_new, std::vector<int>* succs, std::vector<int>* costs, bool is_q_e_goal);
-    void computeEnclosingRadii(std::shared_ptr<Eigen::MatrixXd> skeleton, std::shared_ptr<Eigen::VectorXd> R);
-    bool addSuccWithCollisionCheck(std::shared_ptr<Eigen::VectorXd> q, Eigen::VectorXd q_e, std::shared_ptr<Eigen::VectorXd> q_new); 
+    void extendSpine(const std::shared_ptr<const Eigen::VectorXd> q, const Eigen::VectorXd q_e, std::shared_ptr<Eigen::VectorXd> q_new);
+    void computeEnclosingRadii(std::shared_ptr<const Eigen::MatrixXd> skeleton, std::shared_ptr<Eigen::VectorXd> R);
+    bool generateSuccWithCollisionCheck(std::shared_ptr<const Eigen::VectorXd> q, const Eigen::VectorXd q_e, std::shared_ptr<Eigen::VectorXd> q_new); 
 
     std::vector<double> m_spheres_radii;
 
     size_t m_num_iter_spine = 5;
 
     double m_prim_len = 8.0/180*M_PI; // TODO: Load this externally from .mprim file
+
+    std::ofstream outputDbgFile;
 };
 
 }

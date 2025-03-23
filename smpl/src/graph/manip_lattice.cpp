@@ -211,7 +211,6 @@ void ManipLattice::GetSuccs(
     }
 
     ManipLatticeState* parent_entry = m_states[state_id];
-
     // assert(parent_entry);
     // assert(parent_entry->coord.size() >= robot()->jointVariableCount());
 
@@ -275,7 +274,6 @@ void ManipLattice::GetSuccs(
         // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        state: " << succ_entry->state);
         // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        cost: %5d", cost(parent_entry, succ_entry, is_goal_succ));
     }
-
     // if (goal_succ_count > 0) {
     //     SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "Got %d goal successors!", goal_succ_count);
     // }
@@ -311,7 +309,7 @@ void ManipLattice::GetSucc(
 
     m_lock.lock();   
     ManipLatticeState* parent_entry = m_states[state_id];
-
+   
     // auto* vis_name = "expansion";
     // SV_SHOW_INFO_NAMED(vis_name, getStateVisualization(parent_entry->state, vis_name));
 
@@ -334,7 +332,6 @@ void ManipLattice::GetSucc(
     }
 
     // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "  actions: %zu", actions.size());
-
     // check actions for validity
     RobotCoord succ_coord(robot()->jointVariableCount(), 0);
     for (size_t i = 0; i < actions.size(); ++i) {
@@ -349,7 +346,6 @@ void ManipLattice::GetSucc(
 
         // compute destination coords
         stateToCoord(action.back(), succ_coord);
-
         // get the successor
 
         // check if hash entry already exists, if not then create one
