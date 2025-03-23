@@ -55,6 +55,8 @@
 #include <smpl/graph/robot_planning_space.h>
 #include <smpl/graph/action_space.h>
 
+#include <fstream>
+
 namespace smpl {
 
 class RobotHeuristic;
@@ -194,6 +196,11 @@ public:
     ManipLatticeState* getState(int state_id) { return m_states[state_id]; };
     ActionSpace* getActions();
     
+    // TEMPORARY DEBUGGING PURPOSES
+    std::ofstream outputDbgFile;
+    std::vector<RobotState> PARENTS;
+    std::vector<std::vector<RobotState>> KIDS;
+
 protected:
 
     /// \name discretization methods

@@ -43,8 +43,6 @@ private :
     size_t m_num_iter_spine = 5;
 
     double m_prim_len = 8.0/180*M_PI; // TODO: Load this externally from .mprim file
-
-    std::ofstream outputDbgFile;
 };
 
 }

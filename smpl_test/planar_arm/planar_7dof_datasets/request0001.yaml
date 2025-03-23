@@ -11,7 +11,7 @@ max_acceleration_scaling_factor: 0
 goal_constraints:
   - joint_constraints:
       - joint_name: joint1
-        position: 3.0 # 1.570796326794896619231321691639
+        position: 3.1415 # 1.570796326794896619231321691639
       - joint_name: joint2
         position: 0
       - joint_name: joint3

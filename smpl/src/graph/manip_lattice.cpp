@@ -137,7 +137,7 @@ bool ManipLattice::init(
     m_coord_deltas = std::move(deltas);
 
     m_actions = actions;
-
+    outputDbgFile.open("/home/beno/TezaETF/code/dok_ne_skontam_sto/manip.txt");
     return true;
 }
 
@@ -211,6 +211,7 @@ void ManipLattice::GetSuccs(
     }
 
     ManipLatticeState* parent_entry = m_states[state_id];
+//PARENTS.push_back(parent_entry->state);
     // assert(parent_entry);
     // assert(parent_entry->coord.size() >= robot()->jointVariableCount());
 
@@ -228,21 +229,20 @@ void ManipLattice::GetSuccs(
         SMPL_WARN("Failed to get actions");
         return;
     }
-
     // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "  actions: %zu", actions.size());
-
+std::vector<RobotState> kidsTmp;
     // check actions for validity
     RobotCoord succ_coord(robot()->jointVariableCount(), 0);
     for (size_t i = 0; i < actions.size(); ++i) {
         auto& action = actions[i];
-
+       
         // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "    action %zu:", i);
         // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "      waypoints: %zu", action.size());
 
         if (!checkAction(parent_entry->state, action)) {
             continue;
         }
-
+//kidsTmp.push_back(action.back());
         // compute destination coords
         stateToCoord(action.back(), succ_coord);
 
@@ -274,6 +274,7 @@ void ManipLattice::GetSuccs(
         // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        state: " << succ_entry->state);
         // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        cost: %5d", cost(parent_entry, succ_entry, is_goal_succ));
     }
+//KIDS.push_back(kidsTmp);
     // if (goal_succ_count > 0) {
     //     SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "Got %d goal successors!", goal_succ_count);
     // }
@@ -1305,6 +1306,19 @@ bool ManipLattice::extractPath(
     path = std::move(opath);
     auto* vis_name = "goal_config";
     SV_SHOW_INFO_NAMED(vis_name, getStateVisualization(path.back(), vis_name));
+    // // BENO 03/25 
+    // // TEMPORARY FOR DEBUGGING PURPOSES
+    // outputDbgFile << "G: " << goal().angles << std::endl;
+    // outputDbgFile.flush();
+    // for(int i = 0; i < PARENTS.size(); i++) {
+    //     outputDbgFile << "P: " << PARENTS.at(i) << std::endl;
+    //     for(auto S : KIDS.at(i))
+    //         outputDbgFile << "K: " << S << std::endl;
+
+    //     outputDbgFile.flush();
+    // }
+    // outputDbgFile.close();
+    // //
     return true;
 }
 

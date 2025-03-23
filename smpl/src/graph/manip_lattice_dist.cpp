@@ -23,7 +23,7 @@ namespace smpl {
 
 // BENO 02/25
 ManipLatticeDist::~ManipLatticeDist() {
-    outputDbgFile.close();
+    
 }
 
 bool ManipLatticeDist::init(
@@ -39,6 +39,9 @@ bool ManipLatticeDist::init(
     m_num_spines = 2*num_DOFs;
     m_spheres_radii = collisionChecker()->getCollisionSpheresRadii();
     m_states = getStates(); // pointer to the vector of states
+    PARENTS.clear();
+    KIDS.clear();
+    outputDbgFile.close();
     outputDbgFile.open("/home/beno/TezaETF/code/dok_ne_skontam_sto/manip_dist.txt");
 }
 
@@ -60,7 +63,7 @@ void ManipLatticeDist::GetSuccs(
         return;
 
     ManipLatticeState* parent_entry = (*m_states)[state_id];
-    // outputDbgFile << "P: " << parent_entry->state << std::endl;
+//PARENTS.push_back(parent_entry->state);
     int goal_succ_count = 0;
 
     // Eigen vector representing state to be expanded
@@ -87,7 +90,7 @@ void ManipLatticeDist::GetSuccs(
 
     std::vector<RobotState> successors_RS; // sucessors RobotStates
     RobotState q_tmpRS(q->size());
-
+std::vector<RobotState> kidsTmp;
     // Genearting bur
     for(size_t i = 0; i < m_num_spines; i++) {
         if(d_c < D_CRIT) { // If the minimum distance is too small -> collison check approach
@@ -96,7 +99,6 @@ void ManipLatticeDist::GetSuccs(
             }
             Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
             successors_RS.push_back(q_tmpRS);
-        //    outputDbgFile << "K: " << q_tmpRS << std::endl;
         } else {
             // Get q_new by extending the spine towards q_e = q_es[i]
             extendSpine(q, q_es.at(i), q_new);
@@ -121,20 +123,30 @@ void ManipLatticeDist::GetSuccs(
                 
                 Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
                 successors_RS.push_back(q_tmpRS);
-                // outputDbgFile << "K: " << q_tmpRS << std::endl;
             }
         }
         
     } // Bur generated
 
-    // Try expanding towards the goal state every time - snap it if you are close
-    extendSpine(q, *m_goal_vec, q_new);
-    Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
-    successors_RS.push_back(q_tmpRS);
+    // Greedy snap
+    if(collisionChecker()->isStateToStateValid(parent_entry->state, goal().angles)) {
+        successors_RS.push_back(goal().angles);
+        std::cout << "JEST BOGA MI" << std::endl;
+    }
+    // // Try expanding towards the goal state every time
+    // extendSpine(q, *m_goal_vec, q_new);
+    // Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
+    // successors_RS.push_back(q_tmpRS);
 
     for(int i = 0; i < successors_RS.size(); i++) {
         auto S = successors_RS.at(i);
+
+        // joint limits
+        if(std::any_of(S.begin(), S.end(), [](double x) {return x > M_PI || x < -M_PI;}))
+            continue;
+
         stateToCoord(S, succ_coord);
+        
         int succ_state_id = getOrCreateState(succ_coord, S);
         ManipLatticeState* succ_entry = getHashEntry(succ_state_id);
         // check if this state meets the goal criteria
@@ -150,10 +162,10 @@ void ManipLatticeDist::GetSuccs(
             succs->push_back(getGoalStateID());
         else 
             succs->push_back(succ_state_id);
-    
+//kidsTmp.push_back(S);    
         costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
     }
-
+// KIDS.push_back(kidsTmp);
 }
 
 void ManipLatticeDist::extendSpine(
