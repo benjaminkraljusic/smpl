@@ -170,6 +170,7 @@ private:
     std::vector<int> m_q;
     std::vector<int> m_ancestors;
 
+    // BENO 03/25
     std::vector<std::vector<int>> m_link_leaf_spheres_indices;
     ///@}
 

@@ -425,10 +425,12 @@ void RobotCollisionState::computeSkeleton(int gidx, std::shared_ptr<std::pair<Ei
     
     int lidx;
 
-    auto indices = getLinkLeafSpheresIndices(gidx);
+    if(m_link_leaf_spheres_indices.empty()) {
+        m_link_leaf_spheres_indices = getLinkLeafSpheresIndices(gidx); 
+    }
 
     for(lidx = 1; lidx < m_model->linkCount() - 1; lidx++) { // Skipping the base link (and tool for now) 
-        auto sphere_state = m_spheres_states.at(lidx).spheres.at(indices.at(lidx).at(0));
+        auto sphere_state = m_spheres_states.at(lidx).spheres.at(m_link_leaf_spheres_indices.at(lidx).at(0));
         
         skeleton.col(lidx - 1) << sphere_state.pos.x(), sphere_state.pos.y(), sphere_state.pos.z();
         if(lidx >= 2) {
@@ -439,10 +441,10 @@ void RobotCollisionState::computeSkeleton(int gidx, std::shared_ptr<std::pair<Ei
     }
 
     // The last sphere of the last link -> "manipulator tip" (not really at the moment)
-    auto x = m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.x();
-    auto y = m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.y();
-    auto z = m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).pos.z();
-    auto r = m_link_spheres_states.at(lidx - 1)->spheres.at(indices.at(lidx - 1).back()).model->radius;
+    auto x = m_link_spheres_states.at(lidx - 1)->spheres.at(m_link_leaf_spheres_indices.at(lidx - 1).back()).pos.x();
+    auto y = m_link_spheres_states.at(lidx - 1)->spheres.at(m_link_leaf_spheres_indices.at(lidx - 1).back()).pos.y();
+    auto z = m_link_spheres_states.at(lidx - 1)->spheres.at(m_link_leaf_spheres_indices.at(lidx - 1).back()).pos.z();
+    auto r = m_link_spheres_states.at(lidx - 1)->spheres.at(m_link_leaf_spheres_indices.at(lidx - 1).back()).model->radius;
     skeleton.col(lidx - 1) << x, y, z;
     skeleton_padded.col(lidx - 2) << x + x/std::sqrt(x*x + y*y)*r, y + y/std::sqrt(x*x + y*y)*r, z;
 
@@ -450,12 +452,14 @@ void RobotCollisionState::computeSkeleton(int gidx, std::shared_ptr<std::pair<Ei
 }
 
 auto RobotCollisionState::getCollisionSpheresRadii(int gidx) -> std::vector<double> {
-    auto indices = getLinkLeafSpheresIndices(gidx);
+    if(m_link_leaf_spheres_indices.empty()) {
+        m_link_leaf_spheres_indices = getLinkLeafSpheresIndices(gidx); 
+    }
 
-    std::vector<double> spheres_radii(indices.size() - 2); // TODO: Fix it to be -1 you know what to do.
+    std::vector<double> spheres_radii(m_link_leaf_spheres_indices.size() - 2); // TODO: Fix it to be -1 you know what to do.
 
     for(int lidx = 1; lidx < m_model->linkCount() - 1; lidx++) { // Skipping the base link (and tool for now) 
-       spheres_radii.at(lidx - 1) = m_spheres_states.at(lidx).spheres.at(indices.at(lidx).at(0)).model->radius;
+       spheres_radii.at(lidx - 1) = m_spheres_states.at(lidx).spheres.at(m_link_leaf_spheres_indices.at(lidx).at(0)).model->radius;
     }
 
     return spheres_radii;
