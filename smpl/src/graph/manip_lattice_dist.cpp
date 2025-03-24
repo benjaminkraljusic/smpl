@@ -39,6 +39,7 @@ bool ManipLatticeDist::init(
     m_num_spines = 2*num_DOFs;
     m_spheres_radii = collisionChecker()->getCollisionSpheresRadii();
     m_states = getStates(); // pointer to the vector of states
+    delta = getDeltas()[0]; // All joints should have the same discretization
     PARENTS.clear();
     KIDS.clear();
     outputDbgFile.close();
@@ -63,7 +64,7 @@ void ManipLatticeDist::GetSuccs(
         return;
 
     ManipLatticeState* parent_entry = (*m_states)[state_id];
-//PARENTS.push_back(parent_entry->state);
+
     int goal_succ_count = 0;
 
     // Eigen vector representing state to be expanded
@@ -110,9 +111,9 @@ std::vector<RobotState> kidsTmp;
                 }
             }
 
+            // // Save the spine extension result
             // Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
-            // successors_RS.push_back(q_tmpRS); // Save the spine extension result
-            // outputDbgFile << "K: " << q_tmpRS << std::endl;
+            // successors_RS.push_back(q_tmpRS); 
 
             // Add fixed increments of collision free extensions of the spine that have equal lenght as motion primitives
             int num_ext_steps = std::floor(((*q - *q_new).norm() + EPS) / m_prim_len); // Added EPS because for some reason floor(1) was sometimes 0
@@ -131,9 +132,9 @@ std::vector<RobotState> kidsTmp;
     // Greedy snap
     if(collisionChecker()->isStateToStateValid(parent_entry->state, goal().angles)) {
         successors_RS.push_back(goal().angles);
-        std::cout << "JEST BOGA MI" << std::endl;
     }
-    // // Try expanding towards the goal state every time
+
+    // // Try expanding tow ards the goal state every time // POSSIBLY CAN BE USED AS SNAP FOR GBurs
     // extendSpine(q, *m_goal_vec, q_new);
     // Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
     // successors_RS.push_back(q_tmpRS);
@@ -154,18 +155,21 @@ std::vector<RobotState> kidsTmp;
         if (is_goal_succ) 
             ++goal_succ_count; // update goal state
 
-        if(!is_goal_succ && i == successors_RS.size() - 1) // Don't add the state obtained by snap if not a goal
-            break;
+        // if(!is_goal_succ && i == successors_RS.size() - 1) // Don't add the state obtained by snap if not a goal POSSIBLY CAN BE USED AS SNAP FOR GBurs
+        //     break;
 
         // put successor on successor list with the proper cost
         if (is_goal_succ) 
             succs->push_back(getGoalStateID());
         else 
             succs->push_back(succ_state_id);
-//kidsTmp.push_back(S);    
+kidsTmp.push_back(S);    
         costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
     }
-// KIDS.push_back(kidsTmp);
+if(goal().angles.size() == 2) {
+PARENTS.push_back(parent_entry->state);    
+KIDS.push_back(kidsTmp);
+}
 }
 
 void ManipLatticeDist::extendSpine(
@@ -176,8 +180,7 @@ void ManipLatticeDist::extendSpine(
     double rho(0), rho_k(0); 				        // The path length in W-space for (complete) robot
 	double step(0);
     size_t counter(0);
-    // Eigen vector representing the state to be expanded
-    //std::shared_ptr<Eigen::VectorXd> q = std::make_shared<Eigen::VectorXd>(Eigen::VectorXd::Map(parent_entry->state.data(), parent_entry->state.size()));
+
     int goal_succ_count = 0;
     RobotCoord succ_coord(num_DOFs, 0);
 

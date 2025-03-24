@@ -195,8 +195,9 @@ public:
     std::vector<ManipLatticeState*> *getStates();
     ManipLatticeState* getState(int state_id) { return m_states[state_id]; };
     ActionSpace* getActions();
+    std::vector<double> getDeltas() { return m_coord_deltas; };
     
-    // TEMPORARY DEBUGGING PURPOSES
+    // TEMPORARY - DEBUGGING PURPOSES
     std::ofstream outputDbgFile;
     std::vector<RobotState> PARENTS;
     std::vector<std::vector<RobotState>> KIDS;
