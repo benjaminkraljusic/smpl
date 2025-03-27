@@ -15,9 +15,10 @@
 #include <smpl/debug/marker_utils.h>
 #include <smpl/spatial.h>
 #include "../profiling.h"
+#include <smpl/graph/manip_lattice_action_space.h>
 
 #define D_CRIT 0.01
-#define EPS 0.00001
+#define EPS 0.0000001
 
 namespace smpl {
 
@@ -34,7 +35,6 @@ bool ManipLatticeDist::init(
     
     // actions not used, kept for compatibility
     ManipLattice::init(robot, checker, resolutions, actions);
-    
     num_DOFs = RobotPlanningSpace::robot()->jointVariableCount(); 
     m_num_spines = 2*num_DOFs;
     m_spheres_radii = collisionChecker()->getCollisionSpheresRadii();
@@ -56,7 +56,6 @@ void ManipLatticeDist::GetSuccs(
         auto goal_tmp = goal().angles;
         m_goal_vec = std::make_shared<Eigen::VectorXd>(goal_tmp.size());
         *m_goal_vec = Eigen::Map<Eigen::VectorXd>(goal_tmp.data(), goal_tmp.size());
-       // outputDbgFile << "G: " << goal_tmp << std::endl;
     }
 
     // goal state should be absorbing
@@ -72,95 +71,99 @@ void ManipLatticeDist::GetSuccs(
    
     // Collision distance
     d_c = collisionChecker()->distanceToCollision(0, parent_entry->state);
-
+    
     // Prepare states towards which bur spines are extended
     std::vector<Eigen::VectorXd> q_es;
 
     for(size_t i = 0; i < parent_entry->state.size(); i++) {
         Eigen::VectorXd stateTmp = *q; 
-        stateTmp[i] = 2*M_PI; // state "infinitely far" along the i-th axis in the C-space
+        stateTmp[i] = M_PI; // state "infinitely far" along the i-th axis in the C-space
         q_es.push_back(stateTmp);
-        stateTmp[i] = -2*M_PI;
+        stateTmp[i] = -M_PI;
         q_es.push_back(stateTmp);
     }
-        
+    
+
     // Generate bur in m_states[state_id]
     std::shared_ptr<Eigen::VectorXd> q_new = std::make_shared<Eigen::VectorXd>(parent_entry->state.size());
 
     RobotCoord succ_coord(num_DOFs, 0);
 
-    std::vector<RobotState> successors_RS; // sucessors RobotStates
+    std::vector<RobotState> successors_RS; // sucessor RobotStates
     RobotState q_tmpRS(q->size());
 std::vector<RobotState> kidsTmp;
-    // Genearting bur
+    // Generating bur
     for(size_t i = 0; i < m_num_spines; i++) {
         if(d_c < D_CRIT) { // If the minimum distance is too small -> collison check approach
-            if(!generateSuccWithCollisionCheck(q, q_es.at(i), q_new)) {// If the new state is in collision continue
+            if(!generateSuccWithCollisionCheck(q, q_es.at(i), q_new)) // If the new state is in collision -> continue
                 continue;
-            }
+            
             Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
             successors_RS.push_back(q_tmpRS);
         } else {
             // Get q_new by extending the spine towards q_e = q_es[i]
             extendSpine(q, q_es.at(i), q_new);
-            // If a spine is too short, shorter than a motion primitive length - apply collision checking approach
+
+            // If a spine is too short (shorter than a motion primitive length) - apply collision checking approach
             if((*q - *q_new).norm() < m_prim_len) {
                 // If successor is in collision don't add it
                 if(!generateSuccWithCollisionCheck(q, q_es.at(i), q_new)) {
                     continue;
                 }
             }
-
             // // Save the spine extension result
             // Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
             // successors_RS.push_back(q_tmpRS); 
 
             // Add fixed increments of collision free extensions of the spine that have equal lenght as motion primitives
-            int num_ext_steps = std::floor(((*q - *q_new).norm() + EPS) / m_prim_len); // Added EPS because for some reason floor(1) was sometimes 0
+            int num_ext_steps = std::floor(((*q - *q_new).norm() + EPS) / m_prim_len); // Added EPS because, for some reason, floor(1.0) was sometimes 0
 
             for(int k = 1; k <= num_ext_steps; k++) {
-                for(int j = 0; j < q->size(); j++) // Add next int number of m_prim_lens
-                    (*q_new)[j] = (*q)[j] + (q_es.at(i) - *q)[j]/(q_es.at(i) - *q).norm()*k*m_prim_len;
-                
+                // for(int j = 0; j < q->size(); j++) // Add next int number of m_prim_lens
+                //     (*q_new)[j] = (*q)[j] + (q_es.at(i) - *q)[j]/(q_es.at(i) - *q).norm()*k*m_prim_len;
+                *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*double(k)*m_prim_len;
+
                 Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
                 successors_RS.push_back(q_tmpRS);
             }
+            
         }
         
     } // Bur generated
 
     // Greedy snap
-    if(collisionChecker()->isStateToStateValid(parent_entry->state, goal().angles)) {
+    if(collisionChecker()->isStateToStateValid(parent_entry->state, goal().angles))
         successors_RS.push_back(goal().angles);
-    }
 
-    // // Try expanding tow ards the goal state every time // POSSIBLY CAN BE USED AS SNAP FOR GBurs
+    // // Try expanding towards the goal state every time // POSSIBLY CAN BE USED AS SNAP FOR GBurs
     // extendSpine(q, *m_goal_vec, q_new);
     // Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
     // successors_RS.push_back(q_tmpRS);
 
     for(int i = 0; i < successors_RS.size(); i++) {
-        auto S = successors_RS.at(i);
+        RobotState S = successors_RS.at(i);
 
-        // joint limits
-        if(std::any_of(S.begin(), S.end(), [](double x) {return x > M_PI || x < -M_PI;}))
-            continue;
-
+        // // joint limits (Not needed if the q_e states are chosen to follow limits of C-space)
+        // if(std::any_of(S.begin(), S.end(), [](double x) {return x > M_PI || x < -M_PI;}))
+        //     continue;
+    
         stateToCoord(S, succ_coord);
         
         int succ_state_id = getOrCreateState(succ_coord, S);
         ManipLatticeState* succ_entry = getHashEntry(succ_state_id);
         // check if this state meets the goal criteria
         auto is_goal_succ = isGoal(S);
-        if (is_goal_succ) 
-            ++goal_succ_count; // update goal state
+        // if (is_goal_succ)
+        //     ++goal_succ_count; // update goal state
 
         // if(!is_goal_succ && i == successors_RS.size() - 1) // Don't add the state obtained by snap if not a goal POSSIBLY CAN BE USED AS SNAP FOR GBurs
         //     break;
 
         // put successor on successor list with the proper cost
-        if (is_goal_succ) 
+        if (is_goal_succ) {
+            ++goal_succ_count;
             succs->push_back(getGoalStateID());
+        }
         else 
             succs->push_back(succ_state_id);
 kidsTmp.push_back(S);    
@@ -234,12 +237,16 @@ void ManipLatticeDist::extendSpine(
 void ManipLatticeDist::computeEnclosingRadii(std::shared_ptr<const Eigen::MatrixXd> skeleton, std::shared_ptr<Eigen::VectorXd> R) {
 
 	for (size_t i = 0; i < num_DOFs; i++) { 			// Starting point on skeleton
-        std::vector<double> endpoint_row;
-
-		for (size_t j = i+1; j <= num_DOFs; j++)	// Final point on skeleton
-			endpoint_row.push_back(((*skeleton).col(j) - (*skeleton).col(i)).norm() + m_spheres_radii[j-1]); /*+ m_spheres_radii[i]*/
-
-        (*R)[i] = *std::max_element(endpoint_row.begin(), endpoint_row.end());
+        // std::vector<double> endpoint_row;
+        double max_element = 0;
+		for (size_t j = i+1; j <= num_DOFs; j++)	{// Final point on skeleton
+			// endpoint_row.push_back(((*skeleton).col(j) - (*skeleton).col(i)).norm() + m_spheres_radii[j-1]); /*+ m_spheres_radii[i]*/
+            auto r = ((*skeleton).col(j) - (*skeleton).col(i)).norm() + m_spheres_radii[j-1]; 
+            if(r > max_element)
+                max_element = r;
+        }
+        (*R)[i] = max_element;
+        // (*R)[i] = *std::max_element(endpoint_row.begin(), endpoint_row.end());
 	}
 
 }
@@ -249,8 +256,10 @@ bool ManipLatticeDist::generateSuccWithCollisionCheck(
     const Eigen::VectorXd q_e,  
     std::shared_ptr<Eigen::VectorXd> q_new) 
 {
-    for(int i = 0; i < q->size(); i++)
-        (*q_new)[i] = (*q)[i] + (q_e - *q)[i]/(q_e - *q).norm()*m_prim_len;
+    *q_new = *q + (q_e - *q)/(q_e - *q).norm()*m_prim_len;
+
+    if (((*q_new).array() > M_PI).any() || ((*q_new).array() < -M_PI).any()) // joint limits check
+        return false;
 
     // Corresponding RobotStates for ManipLattice methods
     RobotState q_RS(q->size());

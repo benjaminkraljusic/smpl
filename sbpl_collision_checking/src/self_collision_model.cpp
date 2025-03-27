@@ -689,14 +689,6 @@ double SelfCollisionModel::getCollisionDistance(const RobotCollisionState& state
     // std::cout << "Pripremam ovo stanje " << state << std::endl;
     prepareState(gidx, state.getJointVarPositions());
 
-    // auto jp = state.getJointVarPositions();
-    // std::cout << "Joint var count: " << m_rcm->jointVarCount() << std::endl;
-    // std::cout << "STATE Joint var positions [m_rcs]: " << std::endl;
-    // for(int i = 0; i < m_rcm->jointVarCount(); i++) {
-    //     std::cout << "Joint name: " << m_rcm->jointVarName(i) << std::endl;
-    //     std::cout << jp[i] << std::endl;
-    // }
-
     double d_c = std::numeric_limits<double>::infinity(); // Minimum workspace distance
     
     const CollisionGroupState& group_state = m_rcs.getGroupStates(gidx);
@@ -714,17 +706,13 @@ double SelfCollisionModel::getCollisionDistance(const RobotCollisionState& state
             double obs_dist = SphereCollisionDistance(*m_grid, sphere_state, 0.0);
 
             // collision
-            if (obs_dist < 0) {
-              //  std::cout << "Collision, sphere: " << sphere_state << std::endl;
+            if (obs_dist < 0) 
                 return 0.0; 
-            }
             
             if (obs_dist < d_c)
                 d_c = obs_dist;
         }
     }
-    
-    // std::cout << "IZRACUNAO SAM d_c [scm]: " << d_c << std::endl;
 
     return d_c;
 }

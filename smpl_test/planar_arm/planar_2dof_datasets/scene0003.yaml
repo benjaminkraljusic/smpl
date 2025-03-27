@@ -9,7 +9,7 @@ world:
         - type: box
           dimensions: [0.1, 0.1, 0.1]
       primitive_poses:
-        - position: [0.0, 0.4, 0.25]
+        - position: [0.25, 0.25, 0.25]
           orientation: [0, 0, 0, 1]
     # - header:
     #     frame_id: base_link
@@ -20,33 +20,33 @@ world:
     #   primitive_poses:
     #     - position: [0, 0.3, 0.25]
     #       orientation: [0, 0, 0, 1]  
-    # - header:
-    #     frame_id: base_link
-    #   id: box3
-    #   primitives:
-    #     - type: box
-    #       dimensions: [0.1, 0.1, 0.1]
-    #   primitive_poses:
-    #     - position: [-0.25, -0.25, 0.25]
-    #       orientation: [0, 0, 0, 1]  
-    # - header:
-    #     frame_id: base_link
-    #   id: box4
-    #   primitives:
-    #     - type: box
-    #       dimensions: [0.1, 0.1, 0.1]
-    #   primitive_poses:
-    #     - position: [0.25, -0.25, 0.25]
-    #       orientation: [0, 0, 0, 1]  
-    # - header:
-    #     frame_id: base_link
-    #   id: box5
-    #   primitives:
-    #     - type: box
-    #       dimensions: [0.1, 0.1, 0.1]
-    #   primitive_poses:
-    #     - position: [-0.25, 0.25, 0.25]
-    #       orientation: [0, 0, 0, 1]  
+    - header:
+        frame_id: base_link
+      id: box3
+      primitives:
+        - type: box
+          dimensions: [0.1, 0.1, 0.1]
+      primitive_poses:
+        - position: [-0.25, -0.25, 0.25]
+          orientation: [0, 0, 0, 1]  
+    - header:
+        frame_id: base_link
+      id: box4
+      primitives:
+        - type: box
+          dimensions: [0.1, 0.1, 0.1]
+      primitive_poses:
+        - position: [0.25, -0.25, 0.25]
+          orientation: [0, 0, 0, 1]  
+    - header:
+        frame_id: base_link
+      id: box5
+      primitives:
+        - type: box
+          dimensions: [0.1, 0.1, 0.1]
+      primitive_poses:
+        - position: [-0.25, 0.25, 0.25]
+          orientation: [0, 0, 0, 1]  
     # - header:
     #     frame_id: base_link
     #   id: sphere1
