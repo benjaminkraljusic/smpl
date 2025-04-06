@@ -42,8 +42,11 @@ private :
 
     size_t m_num_iter_spine = 1; // spines expanded in axis directions, i.e. the bubble is sampled in the first expansion -> only one spine iteration is needed
 
-    double m_prim_len = 8*0.017453292519943295; //8.0/180*M_PI; // TODO: Load this externally from .mprim file
+    double m_prim_len; //= 8*0.017453292519943295; //8.0/180*M_PI; // TODO: Load this externally from .mprim file
+    double search_step;
 
+    bool add_last_step;
+    bool add_intermediate_states;
     double delta;
 };
 

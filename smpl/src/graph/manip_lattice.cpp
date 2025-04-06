@@ -1322,9 +1322,27 @@ if(goal().angles.size() == 2) {
 
         outputDbgFile.flush();
     }
+
+    outputDbgFile << "SOLUTION: " << std::endl;
+    for(auto x : path) 
+        outputDbgFile << x << std::endl;
+        
     outputDbgFile.close();
 }
-    //
+
+
+double path_cost = 0.0;
+RobotState xOld = path[0];
+for(auto x : path) {
+    double sum = 0.0;
+    for(int i = 0; i < x.size(); i++)
+        sum += (x[i] - xOld[i])*(x[i] - xOld[i]);
+    xOld = x;
+    path_cost += std::sqrt(sum);
+    outputDbgFile << x << std::endl;
+}
+std::cout << "PATH COST: " << path_cost << std::endl;
+// STILL TEMPORARY
 
     return true;
 }

@@ -7,7 +7,7 @@ world:
       id: box1
       primitives: 
         - type: box
-          dimensions: [0.1, 0.1, 0.1]
+          dimensions: [0.065, 0.065, 0.1]
       primitive_poses:
         - position: [0.0, 0.4, 0.25]
           orientation: [0, 0, 0, 1]
