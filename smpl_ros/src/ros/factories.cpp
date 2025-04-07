@@ -244,7 +244,6 @@ auto MakeManipLatticeDist(
 
     auto disc = ParseMapFromString<double>(disc_string);
     SMPL_DEBUG_NAMED(PI_LOGGER, "Parsed discretization for %zu joints", disc.size());
-
     for (size_t vidx = 0; vidx < robot->jointVariableCount(); ++vidx) {
         auto& vname = robot->getPlanningJoints()[vidx];
         std::string joint_name, local_name;
@@ -331,7 +330,17 @@ auto MakeManipLatticeDist(
         } else if (ait->type == MotionPrimitive::LONG_DISTANCE ||
             ait->type == MotionPrimitive::SHORT_DISTANCE)
         {
+
             SMPL_DEBUG_STREAM_NAMED(PI_LOGGER, "    action: " << ait->action);
+            // Find the first motion along a certain axis that is not zero.
+            // Assuming that mprim motions are equal for every joint.
+            for(auto act_len : ait->action[0]) {
+                if(std::fabs(act_len) > 0) {
+                    space->m_search_step = std::fabs(act_len);
+                    break;
+                }
+            }
+
         }
     }
 

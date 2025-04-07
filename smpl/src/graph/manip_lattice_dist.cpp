@@ -3,6 +3,7 @@
 // standard includes
 #include <iomanip>
 #include <sstream>
+#include <cmath>
 
 // system includes
 #include <sbpl/planners/planner.h>
@@ -14,8 +15,6 @@
 #include <smpl/debug/visualize.h>
 #include <smpl/debug/marker_utils.h>
 #include <smpl/spatial.h>
-#include "../profiling.h"
-#include <smpl/graph/manip_lattice_action_space.h>
 
 #define D_CRIT 0.03
 #define EPS 0.0000001
@@ -35,26 +34,18 @@ bool ManipLatticeDist::init(
     
     // actions not used, kept for compatibility
     ManipLattice::init(robot, checker, resolutions, actions);
-    num_DOFs = RobotPlanningSpace::robot()->jointVariableCount(); 
-    m_num_spines = 2*num_DOFs;
-    m_spheres_radii = collisionChecker()->getCollisionSpheresRadii();
+
+    m_num_DOFs = RobotPlanningSpace::robot()->jointVariableCount(); 
+    m_num_spines = 2*m_num_DOFs;
+
+    m_collision_spheres_radii = collisionChecker()->getCollisionSpheresRadii();
     m_states = getStates(); // pointer to the vector of states
-    delta = getDeltas()[0]; // All joints should have the same discretization
+    m_delta = getDeltas()[0]; // All joints should have the same discretization
+    
     PARENTS.clear();
     KIDS.clear();
     outputDbgFile.close();
     outputDbgFile.open("/home/beno/TezaETF/code/dok_ne_skontam_sto/manip_dist.txt");
-    m_prim_len = 8*delta;
-    int num;
-    std::cout << "STEP: " << std::endl;
-    std::cin >> num;
-    std::cout << "Add the original state: (1 - yes, 0 - no)" << std::endl;
-    std::cin >> add_last_step;
-    std::cout << "Add intermediate states: (1 - yes, 0 - no)" << std::endl;
-    std::cin >> add_intermediate_states;
-    search_step = num*delta;
-    // std::cout << "MPRIM " << m_prim_len << std::endl;
-    // std::cout << "DELTA " << delta << std::endl;
 }
 
 void ManipLatticeDist::GetSuccs(
@@ -81,7 +72,7 @@ void ManipLatticeDist::GetSuccs(
     std::shared_ptr<Eigen::VectorXd> q = std::make_shared<Eigen::VectorXd>(Eigen::VectorXd::Map(parent_entry->state.data(), parent_entry->state.size()));
    
     // Collision distance
-    d_c = collisionChecker()->distanceToCollision(0, parent_entry->state);
+    m_d_c = collisionChecker()->distanceToCollision(0, parent_entry->state);
     
     // Prepare states towards which bur spines are extended
     std::vector<Eigen::VectorXd> q_es;
@@ -98,14 +89,14 @@ void ManipLatticeDist::GetSuccs(
     // Generate bur in m_states[state_id]
     std::shared_ptr<Eigen::VectorXd> q_new = std::make_shared<Eigen::VectorXd>(parent_entry->state.size());
 
-    RobotCoord succ_coord(num_DOFs, 0);
+    RobotCoord succ_coord(m_num_DOFs, 0);
 
     std::vector<RobotState> successors_RS; // sucessor RobotStates
     RobotState q_tmpRS(q->size());
 std::vector<RobotState> kidsTmp;
     // Generating bur
     for(size_t i = 0; i < m_num_spines; i++) {
-        if(d_c < D_CRIT) { // If the minimum distance is too small -> collison check approach
+        if(m_d_c < D_CRIT) { // If the minimum distance is too small -> collison check approach
             if(!generateSuccWithCollisionCheck(q, q_es.at(i), q_new)) // If the new state is in collision -> continue
                 continue;
             
@@ -113,78 +104,65 @@ std::vector<RobotState> kidsTmp;
             successors_RS.push_back(q_tmpRS);
             continue;
         } else {
+
             // Get q_new by extending the spine towards q_e = q_es[i]
             extendSpine(q, q_es.at(i), q_new);
 
             // If a spine is too short (shorter than a motion primitive length) - apply collision checking approach
-            if((*q - *q_new).norm() < m_prim_len) {
+            if((*q - *q_new).norm() < m_search_step) {
                 // If successor is in collision don't add it
                 if(!generateSuccWithCollisionCheck(q, q_es.at(i), q_new)) {
                     continue;
                 } 
                   
                 // Add one mprim len
-                // *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*m_prim_len;
+                // *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*m_search_step;
                 Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
                 successors_RS.push_back(q_tmpRS);
                 continue;
                 
             }
-            // // Save the spine extension result
-            // Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
-            // successors_RS.push_back(q_tmpRS); 
 
-            /* SOLUTION WITH THE GRID AND ONE MPRIM */
-            // // Stick with the gird
-            // int num_deltas = std::floor(((*q - *q_new).norm() + EPS) / delta); // Added EPS because, for some reason, floor(1.0) was sometimes 0
-            // *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*num_deltas*delta;
-            // Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
-            // successors_RS.push_back(q_tmpRS);
-            
-            // // Add one mprim len
-            // *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*m_prim_len;
-            // Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
-            // successors_RS.push_back(q_tmpRS);
+            // int num_deltas = std::floor(((*q - *q_new).norm() + EPS) / m_delta);
+            int num_ext_steps = std::floor(((*q - *q_new).norm() + EPS) / m_search_step); // Added EPS because, for some reason, floor(1.0) was sometimes 0
 
-            /* SOLUTION WITH THE GRID AND ONE MPRIM */
-
-            // int num_ext_steps = std::floor(((*q - *q_new).norm() + EPS) / m_prim_len); // Added EPS because, for some reason, floor(1.0) was sometimes 0
-            int num_deltas = std::floor(((*q - *q_new).norm() + EPS) / delta);
-            int num_ext_steps = std::floor(((*q - *q_new).norm() + EPS) / search_step);
+            *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*num_ext_steps*m_search_step;
+            Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
+            successors_RS.push_back(q_tmpRS);   
 
             // // Add fixed increments of collision free extensions of the spine with the lenght equal to that of the *****motion primitives*****
             // for(int k = 1; k <= num_ext_steps; k++) {
             //     // for(int j = 0; j < q->size(); j++) // Add next int number of m_prim_lens
-            //     //     (*q_new)[j] = (*q)[j] + (q_es.at(i) - *q)[j]/(q_es.at(i) - *q).norm()*k*m_prim_len;
-            //     *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*double(k)*m_prim_len;
+            //     //     (*q_new)[j] = (*q)[j] + (q_es.at(i) - *q)[j]/(q_es.at(i) - *q).norm()*k*m_search_step;
+            //     *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*double(k)*m_search_step;
             //     Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
             //     successors_RS.push_back(q_tmpRS);
             // }
 
-            // Add fixed increments of collision free extensions of the spine with the lenght equal to *****search_step*****
-            if(add_intermediate_states) {
-                for(int k = 1; k <= num_ext_steps; k++) {
-                    *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*double(k)*search_step;
-                    Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
-                    successors_RS.push_back(q_tmpRS);
-                }
-            } else {
-                *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*num_ext_steps*search_step;
-                Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
-                successors_RS.push_back(q_tmpRS);   
-            }
+            // // Add fixed increments of collision free extensions of the spine with the lenght equal to *****search_step*****
+            // if(m_add_intermediate_states) {
+            //     for(int k = 1; k <= num_ext_steps; k++) {
+            //         *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*double(k)*m_search_step;
+            //         Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
+            //         successors_RS.push_back(q_tmpRS);
+            //     }
+            // } else {
+            //     *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*num_ext_steps*m_search_step;
+            //     Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
+            //     successors_RS.push_back(q_tmpRS);   
+            // }
 
             // // Add the highest value that is multiple of a *****search_step*****
             // *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*num_ext_steps*search_step;
             // Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
             // successors_RS.push_back(q_tmpRS);
 
-            // Add the last state minding the grid
-            if(add_last_step) {
-                *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*num_deltas*delta;
-                Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
-                successors_RS.push_back(q_tmpRS);
-            }
+            // // Add the last state minding the grid
+            // if(m_add_last_step) {
+            //     *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*num_deltas*m_delta;
+            //     Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
+            //     successors_RS.push_back(q_tmpRS);
+            // }
 
             // // Add one mprim len
             // *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*m_prim_len;
@@ -217,8 +195,6 @@ std::vector<RobotState> kidsTmp;
         ManipLatticeState* succ_entry = getHashEntry(succ_state_id);
         // check if this state meets the goal criteria
         auto is_goal_succ = isGoal(S);
-        // if (is_goal_succ)
-        //     ++goal_succ_count; // update goal state
 
         // if(!is_goal_succ && i == successors_RS.size() - 1) // Don't add the state obtained by snap if not a goal POSSIBLY CAN BE USED AS SNAP FOR GBurs
         //     break;
@@ -228,8 +204,9 @@ std::vector<RobotState> kidsTmp;
             ++goal_succ_count;
             succs->push_back(getGoalStateID());
         }
-        else 
+        else {
             succs->push_back(succ_state_id);
+        }
 kidsTmp.push_back(S);    
         costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
     }
@@ -249,20 +226,20 @@ void ManipLatticeDist::extendSpine(
     size_t counter(0);
 
     int goal_succ_count = 0;
-    RobotCoord succ_coord(num_DOFs, 0);
+    RobotCoord succ_coord(m_num_DOFs, 0);
 
     RobotState q_newRS(q->size());
 
     Eigen::VectorXd q_temp = *q;
     Eigen::VectorXd delta_q;
-    std::shared_ptr<Eigen::VectorXd> R = std::make_shared<Eigen::VectorXd>(num_DOFs); // Enclosing radii
+    std::shared_ptr<Eigen::VectorXd> R = std::make_shared<Eigen::VectorXd>(m_num_DOFs); // Enclosing radii
     
     RobotState q_tempRS(q->size());
     Eigen::Map<Eigen::VectorXd>(q_tempRS.data(), q_tempRS.size()) = q_temp;
 
-    std::shared_ptr<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> skeleton_pair = std::make_shared<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>>(std::make_pair(Eigen::MatrixXd(3, num_DOFs + 1), Eigen::MatrixXd(3, num_DOFs))); 
+    std::shared_ptr<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> skeleton_pair = std::make_shared<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>>(std::make_pair(Eigen::MatrixXd(3, m_num_DOFs + 1), Eigen::MatrixXd(3, m_num_DOFs))); 
     collisionChecker()->computeSkeleton(0, q_tempRS, skeleton_pair);
-    std::shared_ptr<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> skeleton_pair_new = std::make_shared<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>>(std::make_pair(Eigen::MatrixXd(3, num_DOFs + 1), Eigen::MatrixXd(3, num_DOFs)));
+    std::shared_ptr<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> skeleton_pair_new = std::make_shared<std::pair<Eigen::MatrixXd, Eigen::MatrixXd>>(std::make_pair(Eigen::MatrixXd(3, m_num_DOFs + 1), Eigen::MatrixXd(3, m_num_DOFs)));
     collisionChecker()->computeSkeleton(0, q_tempRS, skeleton_pair_new);
 
     // Regular spine extending algorithm
@@ -271,7 +248,7 @@ void ManipLatticeDist::extendSpine(
 
         delta_q = (q_e - q_temp).cwiseAbs();
 
-        step = (d_c - rho) / R->dot(delta_q);	// 'd_c - rho' is the remaining path length in W-space
+        step = (m_d_c - rho) / R->dot(delta_q);	// 'd_c - rho' is the remaining path length in W-space
 
         if (step > 1) { // This should only be the case when q_e is the goal
             *q_new = q_e;
@@ -300,12 +277,12 @@ void ManipLatticeDist::extendSpine(
 // Compute enclosing radii and store it in R. Currently works only for planar robots.
 void ManipLatticeDist::computeEnclosingRadii(std::shared_ptr<const Eigen::MatrixXd> skeleton, std::shared_ptr<Eigen::VectorXd> R) {
 
-	for (size_t i = 0; i < num_DOFs; i++) { 			// Starting point on skeleton
+	for (size_t i = 0; i < m_num_DOFs; i++) { 			// Starting point on skeleton
         // std::vector<double> endpoint_row;
         double max_element = 0;
-		for (size_t j = i+1; j <= num_DOFs; j++)	{// Final point on skeleton
-			// endpoint_row.push_back(((*skeleton).col(j) - (*skeleton).col(i)).norm() + m_spheres_radii[j-1]); /*+ m_spheres_radii[i]*/
-            auto r = ((*skeleton).col(j) - (*skeleton).col(i)).norm() + m_spheres_radii[j-1]; 
+		for (size_t j = i+1; j <= m_num_DOFs; j++)	{// Final point on skeleton
+			// endpoint_row.push_back(((*skeleton).col(j) - (*skeleton).col(i)).norm() + m_collision_spheres_radii[j-1]); 
+            auto r = ((*skeleton).col(j) - (*skeleton).col(i)).norm() + 2*m_collision_spheres_radii[j-1]; 
             if(r > max_element)
                 max_element = r;
         }
@@ -320,8 +297,7 @@ bool ManipLatticeDist::generateSuccWithCollisionCheck(
     const Eigen::VectorXd q_e,  
     std::shared_ptr<Eigen::VectorXd> q_new) 
 {
-    // *q_new = *q + (q_e - *q)/(q_e - *q).norm()*m_prim_len;
-    *q_new = *q + (q_e - *q)/(q_e - *q).norm()*search_step;
+    *q_new = *q + (q_e - *q)/(q_e - *q).norm()*m_search_step;
 
     if (((*q_new).array() > M_PI).any() || ((*q_new).array() < -M_PI).any()) // joint limits check
         return false;

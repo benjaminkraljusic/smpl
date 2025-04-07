@@ -54,6 +54,7 @@
 #include <smpl/types.h>
 #include <smpl/graph/robot_planning_space.h>
 #include <smpl/graph/action_space.h>
+#include <smpl/graph/motion_primitive.h>
 
 #include <fstream>
 
@@ -196,8 +197,9 @@ public:
     ManipLatticeState* getState(int state_id) { return m_states[state_id]; };
     ActionSpace* getActions();
     std::vector<double> getDeltas() { return m_coord_deltas; };
+    double m_search_step = 0.0; // Used only by ManipLatticeDist. Ugly solution, needed for experiments...
     
-    // TEMPORARY - DEBUGGING PURPOSES
+    // TEMPORARY - DEBUGGING AND LOGGING PURPOSES
     std::ofstream outputDbgFile;
     std::vector<RobotState> PARENTS;
     std::vector<std::vector<RobotState>> KIDS;

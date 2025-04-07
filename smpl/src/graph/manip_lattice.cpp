@@ -136,8 +136,10 @@ bool ManipLattice::init(
     m_coord_vals = std::move(discretization);
     m_coord_deltas = std::move(deltas);
 
+    // BENO 04/01
     m_actions = actions;
     outputDbgFile.open("/home/beno/TezaETF/code/dok_ne_skontam_sto/manipulacija.txt");
+    
     return true;
 }
 
