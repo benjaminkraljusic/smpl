@@ -282,7 +282,7 @@ void ManipLatticeDist::computeEnclosingRadii(std::shared_ptr<const Eigen::Matrix
         double max_element = 0;
 		for (size_t j = i+1; j <= m_num_DOFs; j++)	{// Final point on skeleton
 			// endpoint_row.push_back(((*skeleton).col(j) - (*skeleton).col(i)).norm() + m_collision_spheres_radii[j-1]); 
-            auto r = ((*skeleton).col(j) - (*skeleton).col(i)).norm() + 2*m_collision_spheres_radii[j-1]; 
+            auto r = ((*skeleton).col(j) - (*skeleton).col(i)).norm() + m_collision_spheres_radii[j-1]; 
             if(r > max_element)
                 max_element = r;
         }
