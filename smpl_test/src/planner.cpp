@@ -131,6 +131,21 @@ bool Planner::initForProblemsDir(std::string const & problems_dir, bool reverse)
         return false;    
     }
 
+    if(!ph_.getParam("epsilon", epsilon_)) {
+        ROS_ERROR("Failed to retrieve param 'epsilon' from the param server");
+        return false;    
+    }
+
+    if(!ph_.getParam("improve", improve_)) {
+        ROS_ERROR("Failed to retrieve param 'improve' from the param server");
+        return false;    
+    }
+
+    if(!ph_.getParam("repair_time", planning_repair_time_)) {
+        ROS_ERROR("Failed to retrieve param 'repair_time' from the param server");
+        return false;    
+    }
+
     // Everyone needs to know the name of the planning frame for
     // reasons...
     // ...frame_id for the occupancy grid (for visualization)
@@ -812,17 +827,17 @@ bool Planner::setupPlannerParams(PlannerConfig & config) {
     planner_params_.addParam("rpy_snap_dist_thresh", config.rpy_snap_dist_thresh);
     planner_params_.addParam("xyzrpy_snap_dist_thresh", config.xyzrpy_snap_dist_thresh);
     planner_params_.addParam("short_dist_mprims_thresh", config.short_dist_mprims_thresh);
-    planner_params_.addParam("epsilon", 100.0);
+    planner_params_.addParam("epsilon", epsilon_);
     planner_params_.addParam("search_mode", false);
     planner_params_.addParam("allow_partial_solutions", false);
     planner_params_.addParam("target_epsilon", 1.0);
     planner_params_.addParam("delta_epsilon", 1.0);
-    planner_params_.addParam("improve_solution", false);
+    planner_params_.addParam("improve_solution", improve_);
     planner_params_.addParam("bound_expansions", true);
-    planner_params_.addParam("repair_time", 1.0);
+    planner_params_.addParam("repair_time", planning_repair_time_);
     planner_params_.addParam("bfs_inlation_radius", 0.02);
     planner_params_.addParam("bfs_cost_per_cell", 100);
-    planner_params_.addParam("planning_space", "manip");
+    planner_params_.addParam("planning_space", planning_space_);
     return true;
 }
 

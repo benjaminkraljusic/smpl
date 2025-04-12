@@ -40,7 +40,7 @@ private :
     void computeEnclosingRadii(std::shared_ptr<const Eigen::MatrixXd> skeleton, std::shared_ptr<Eigen::VectorXd> R);
     bool generateSuccWithCollisionCheck(std::shared_ptr<const Eigen::VectorXd> q, const Eigen::VectorXd q_e, std::shared_ptr<Eigen::VectorXd> q_new); 
 
-    // bool m_add_intermediate_states = false;
+    // bool m_add_intermediate_states = true;
     // bool m_add_last_step = false;
 };
 

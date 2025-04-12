@@ -13,6 +13,9 @@
     <arg name="check"       default="false"/>
     <arg name="args"        default=""/>
     <arg name="planning_space" default="manip"/>
+    <arg name="epsilon" default="50.0"/>
+    <arg name="improve" default="true"/>
+    <arg name="repair_time" default="20.0"/>
 
     <arg unless="$(arg debug)"   name="debug-prefix"   value=""/>
     <arg     if="$(arg debug)"   name="debug-prefix"   value="gdb -ex run --args"/>
@@ -63,5 +66,9 @@
         <param name="reverse"   value="$(arg reverse)"/>
         <param name="check"     value="$(arg check)"/>
         <param name="planning_space" value="$(arg planning_space)"/>
+        <param name="epsilon" value="$(arg epsilon)"/>
+        <param name="improve" value="$(arg improve)"/>
+        <param name="repair_time" value="$(arg repair_time)"/>
+
     </node>
 </launch>

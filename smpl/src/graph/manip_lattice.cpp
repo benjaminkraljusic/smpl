@@ -1248,6 +1248,7 @@ bool ManipLattice::extractPath(
         }
 
         if (curr_id == getGoalStateID()) {
+            // std::cout << "JEST GOAL JEBO GA TI" << std::endl;
             SMPL_DEBUG_NAMED(G_LOG, "Search for transition to goal state");
 
             ManipLatticeState* prev_entry = m_states[prev_id];
@@ -1283,6 +1284,7 @@ bool ManipLattice::extractPath(
                 assert(succ_entry);
 
                 auto edge_cost = cost(prev_entry, succ_entry, true);
+                // std::cout << "EDGE COST JEBO GA TI: " << edge_cost << std::endl;
                 if (edge_cost < best_cost) {
                     best_cost = edge_cost;
                     best_goal_state = succ_entry;
@@ -1454,8 +1456,4 @@ std::vector<ManipLatticeState*>* ManipLattice::getStates()
     return &m_states;
 }
 
-ActionSpace* ManipLattice::getActions() 
-{
-    return m_actions;
-}
 } // namespace smpl

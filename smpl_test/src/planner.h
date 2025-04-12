@@ -134,6 +134,9 @@ class Planner {
     std::vector<moveit_msgs::CollisionObject> collision_objects_;
 
     std::string planning_space_;
+    double epsilon_;
+    bool improve_;
+    double planning_repair_time_;
 };
 
 #endif

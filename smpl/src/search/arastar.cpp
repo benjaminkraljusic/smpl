@@ -112,7 +112,6 @@ int ARAStar::replan(
     int* cost)
 {
     SMPL_DEBUG_NAMED(SLOG, "Find path to goal");
-
     if (m_start_state_id < 0) {
         SMPL_ERROR_NAMED(SLOG, "Start state not set");
         return !START_NOT_SET;
@@ -166,7 +165,7 @@ int ARAStar::replan(
     auto start_time = clock::now();
     int num_expansions = 0;
     clock::duration elapsed_time = clock::duration::zero();
-
+    int cnt = 0; 
     int err;
     while (m_satisfied_eps > m_final_eps) {
         if (m_curr_eps == m_satisfied_eps) {
@@ -215,7 +214,6 @@ int ARAStar::replan(
     //===================
     saveExploredStates();
     //===================
-
     extractPath(goal_state, *solution, *cost);
     return !SUCCESS;
 }
@@ -547,14 +545,11 @@ void ARAStar::expand(SearchState* s)
     m_space->GetSuccs(s->state_id, &m_succs, &m_costs);
 
     SMPL_DEBUG_NAMED(SELOG, "  %zu successors", m_succs.size());
-
     for (size_t sidx = 0; sidx < m_succs.size(); ++sidx) {
         int succ_state_id = m_succs[sidx];
         int cost = m_costs[sidx];
-
         SearchState* succ_state = getSearchState(succ_state_id);
         reinitSearchState(succ_state);
-
         int new_cost = s->eg + cost;
         SMPL_DEBUG_NAMED(SELOG, "Compare new cost %d vs old cost %d", new_cost, succ_state->g);
         if (new_cost < succ_state->g) {

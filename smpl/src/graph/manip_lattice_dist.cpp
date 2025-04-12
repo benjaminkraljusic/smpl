@@ -126,6 +126,7 @@ std::vector<RobotState> kidsTmp;
             // int num_deltas = std::floor(((*q - *q_new).norm() + EPS) / m_delta);
             int num_ext_steps = std::floor(((*q - *q_new).norm() + EPS) / m_search_step); // Added EPS because, for some reason, floor(1.0) was sometimes 0
 
+            // Add the farthest successor that is still on the grid
             *q_new = *q + (q_es.at(i) - *q)/(q_es.at(i) - *q).norm()*num_ext_steps*m_search_step;
             Eigen::Map<Eigen::VectorXd>(q_tmpRS.data(), q_tmpRS.size()) = *q_new;
             successors_RS.push_back(q_tmpRS);   

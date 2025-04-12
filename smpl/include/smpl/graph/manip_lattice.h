@@ -194,8 +194,6 @@ public:
 
     //BENO 01/25
     std::vector<ManipLatticeState*> *getStates();
-    ManipLatticeState* getState(int state_id) { return m_states[state_id]; };
-    ActionSpace* getActions();
     std::vector<double> getDeltas() { return m_coord_deltas; };
     double m_search_step = 0.0; // Used only by ManipLatticeDist. Ugly solution, needed for experiments...
     
