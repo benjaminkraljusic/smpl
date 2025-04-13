@@ -15,7 +15,7 @@
     <arg name="planning_space" default="manip"/>
     <arg name="epsilon" default="50.0"/>
     <arg name="improve" default="true"/>
-    <arg name="repair_time" default="20.0"/>
+    <arg name="repair_time" default="40.0"/>
 
     <arg unless="$(arg debug)"   name="debug-prefix"   value=""/>
     <arg     if="$(arg debug)"   name="debug-prefix"   value="gdb -ex run --args"/>
