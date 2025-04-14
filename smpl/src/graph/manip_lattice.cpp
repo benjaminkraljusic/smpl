@@ -138,7 +138,7 @@ bool ManipLattice::init(
 
     // BENO 04/01
     m_actions = actions;
-    outputDbgFile.open("/home/beno/TezaETF/code/dok_ne_skontam_sto/manipulacija.txt");
+    outputDbgFile.open("manipTmp.txt");  // ~/.ros/manipTmp.txt
     
     return true;
 }
@@ -232,7 +232,11 @@ void ManipLattice::GetSuccs(
         return;
     }
     // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "  actions: %zu", actions.size());
-std::vector<RobotState> kidsTmp;
+    
+    // BBBBBBBBBB
+    std::vector<RobotState> kidsTmp; // To track search
+    // BBBBBBBBBB
+
     // check actions for validity
     RobotCoord succ_coord(robot()->jointVariableCount(), 0);
     for (size_t i = 0; i < actions.size(); ++i) {
@@ -244,7 +248,11 @@ std::vector<RobotState> kidsTmp;
         if (!checkAction(parent_entry->state, action)) {
             continue;
         }
-kidsTmp.push_back(action.back());
+        
+        // BBBBBBBBBB
+        kidsTmp.push_back(action.back());
+        // BBBBBBBBBB
+
         // compute destination coords
         stateToCoord(action.back(), succ_coord);
 
@@ -276,10 +284,14 @@ kidsTmp.push_back(action.back());
         // SMPL_DEBUG_STREAM_NAMED(G_EXPANSIONS_LOG, "        state: " << succ_entry->state);
         // SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "        cost: %5d", cost(parent_entry, succ_entry, is_goal_succ));
     }
-if(parent_entry->state.size() == 2) {
-PARENTS.push_back(parent_entry->state);
-KIDS.push_back(kidsTmp);
-}
+
+    // BBBBBBBBBB
+    if(parent_entry->state.size() == 2) {
+        PARENTS.push_back(parent_entry->state);
+        KIDS.push_back(kidsTmp);
+    }
+    // BBBBBBBBBB
+    
     // if (goal_succ_count > 0) {
     //     SMPL_DEBUG_NAMED(G_EXPANSIONS_LOG, "Got %d goal successors!", goal_succ_count);
     // }
@@ -829,9 +841,17 @@ int ManipLattice::cost(
     ManipLatticeState* HashEntry1,
     ManipLatticeState* HashEntry2,
     bool bState2IsGoal) const
-{
-    auto DefaultCostMultiplier = 1000;
-    return DefaultCostMultiplier;
+{   
+    //return 1000;
+    auto DefaultCostMultiplier = 10;
+    int cost = 0;
+
+    for(int i = 0; i < HashEntry1->state.size(); i++)
+        cost += std::abs(HashEntry1->coord[i] - HashEntry2->coord[i]);
+
+    return DefaultCostMultiplier*cost;
+
+    //return DefaultCostMultiplier;
 }
 
 bool ManipLattice::checkAction(const RobotState& state, const Action& action)
@@ -1284,7 +1304,7 @@ bool ManipLattice::extractPath(
                 assert(succ_entry);
 
                 auto edge_cost = cost(prev_entry, succ_entry, true);
-                // std::cout << "EDGE COST JEBO GA TI: " << edge_cost << std::endl;
+                
                 if (edge_cost < best_cost) {
                     best_cost = edge_cost;
                     best_goal_state = succ_entry;
@@ -1315,14 +1335,14 @@ bool ManipLattice::extractPath(
     SV_SHOW_INFO_NAMED(vis_name, getStateVisualization(path.back(), vis_name));
 
     // BENO 03/25 
-    // TEMPORARY FOR DEBUGGING PURPOSES
-if(goal().angles.size() == 2) {
-    outputDbgFile << "G: " << goal().angles << std::endl;
-    outputDbgFile.flush();
-    for(int i = 0; i < PARENTS.size(); i++) {
-        outputDbgFile << "P: " << PARENTS.at(i) << std::endl;
-        for(auto S : KIDS.at(i))
-            outputDbgFile << "K: " << S << std::endl;
+    // Logging 2DoF search to plot
+    if(goal().angles.size() == 2) {
+        outputDbgFile << "G: " << goal().angles << std::endl;
+        outputDbgFile.flush();
+        for(int i = 0; i < PARENTS.size(); i++) {
+            outputDbgFile << "P: " << PARENTS.at(i) << std::endl;
+            for(auto S : KIDS.at(i))
+                outputDbgFile << "K: " << S << std::endl;
 
         outputDbgFile.flush();
     }

@@ -18,7 +18,7 @@ world:
         - type: box
           dimensions: [0.06, 0.06, 0.1]
       primitive_poses:
-        - position: [-0.2, 0.25, 0.25]
+        - position: [-0.25, 0.25, 0.25]
           orientation: [0, 0, 0, 1]  
     - header:
         frame_id: base_link

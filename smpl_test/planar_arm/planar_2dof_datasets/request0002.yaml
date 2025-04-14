@@ -16,7 +16,7 @@ goal_constraints:
         position: 0.0
 start_state:
   joint_state:
-    position: [1.5, -1.7]
+    position: [0.0, 0.0]
     name: [joint1, joint2]
     header:
       frame_id: base_link

@@ -7,9 +7,9 @@ world:
       id: box1
       primitives: 
         - type: box
-          dimensions: [0.065, 0.065, 0.1]
+          dimensions: [0.065, 0.065, 0.5]
       primitive_poses:
-        - position: [0.0, 0.4, 0.25]
+        - position: [0.0, 0.29, 0.25]
           orientation: [0, 0, 0, 1]
     # - header:
     #     frame_id: base_link

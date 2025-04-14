@@ -45,7 +45,7 @@ bool ManipLatticeDist::init(
     PARENTS.clear();
     KIDS.clear();
     outputDbgFile.close();
-    outputDbgFile.open("/home/beno/TezaETF/code/dok_ne_skontam_sto/manip_dist.txt");
+    outputDbgFile.open("manip_dist.txt"); // ~/.ros/manip_dist.txt
 }
 
 void ManipLatticeDist::GetSuccs(
@@ -84,7 +84,6 @@ void ManipLatticeDist::GetSuccs(
         stateTmp[i] = -M_PI;
         q_es.push_back(stateTmp);
     }
-    
 
     // Generate bur in m_states[state_id]
     std::shared_ptr<Eigen::VectorXd> q_new = std::make_shared<Eigen::VectorXd>(parent_entry->state.size());
@@ -93,7 +92,11 @@ void ManipLatticeDist::GetSuccs(
 
     std::vector<RobotState> successors_RS; // sucessor RobotStates
     RobotState q_tmpRS(q->size());
-std::vector<RobotState> kidsTmp;
+
+    // BBBBBBBBBB
+    std::vector<RobotState> kidsTmp;
+    // BBBBBBBBBB
+
     // Generating bur
     for(size_t i = 0; i < m_num_spines; i++) {
         if(m_d_c < D_CRIT) { // If the minimum distance is too small -> collison check approach
@@ -208,13 +211,17 @@ std::vector<RobotState> kidsTmp;
         else {
             succs->push_back(succ_state_id);
         }
-kidsTmp.push_back(S);    
+        // BBBBBBBBBB
+        kidsTmp.push_back(S);    
+        // BBBBBBBBBB
+
         costs->push_back(cost(parent_entry, succ_entry, is_goal_succ));
     }
-if(goal().angles.size() == 2) {
-PARENTS.push_back(parent_entry->state);    
-KIDS.push_back(kidsTmp);
-}
+
+    if(goal().angles.size() == 2) {
+        PARENTS.push_back(parent_entry->state);    
+        KIDS.push_back(kidsTmp);
+    }
 }
 
 void ManipLatticeDist::extendSpine(
@@ -276,7 +283,10 @@ void ManipLatticeDist::extendSpine(
 }
 
 // Compute enclosing radii and store it in R. Currently works only for planar robots.
-void ManipLatticeDist::computeEnclosingRadii(std::shared_ptr<const Eigen::MatrixXd> skeleton, std::shared_ptr<Eigen::VectorXd> R) {
+void ManipLatticeDist::computeEnclosingRadii(
+    std::shared_ptr<const Eigen::MatrixXd> skeleton, 
+    std::shared_ptr<Eigen::VectorXd> R) 
+{
 
 	for (size_t i = 0; i < m_num_DOFs; i++) { 			// Starting point on skeleton
         // std::vector<double> endpoint_row;
