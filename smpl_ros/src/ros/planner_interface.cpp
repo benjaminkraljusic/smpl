@@ -849,6 +849,21 @@ bool PlannerInterface::solve(
     res.error_code.val = moveit_msgs::MoveItErrorCodes::SUCCESS;
 
     SMPL_DEBUG_NAMED(PI_LOGGER, "planner path:");
+
+    // Calculate path len as a sum of euclidean distances between successive path points in C-space
+    double path_cost = 0.0;
+    RobotState xOld = path[0];
+    for(auto x : path) {
+        double sum = 0.0;
+        for(int i = 0; i < x.size(); i++)
+            sum += (x[i] - xOld[i])*(x[i] - xOld[i]);
+        xOld = x;
+        path_cost += std::sqrt(sum);
+    }
+
+    m_path_len = path_cost;
+    // 
+    
     for (size_t pidx = 0; pidx < path.size(); ++pidx) {
         auto& point = path[pidx];
         SMPL_DEBUG_STREAM_NAMED(PI_LOGGER, "  " << pidx << ": " << point);

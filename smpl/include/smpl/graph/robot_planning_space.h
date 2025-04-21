@@ -124,7 +124,7 @@ public:
         bool verbose,
         FILE* f = nullptr) override = 0;
     ///@}
-
+    
 private:
 
     RobotModel* m_robot             = nullptr;

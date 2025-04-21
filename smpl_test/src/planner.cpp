@@ -146,6 +146,11 @@ bool Planner::initForProblemsDir(std::string const & problems_dir, bool reverse)
         return false;    
     }
 
+    if(!ph_.getParam("stats_file_name", planning_stats_file_name_)) {
+        ROS_ERROR("Failed to retrieve param 'stats_file_name' from the param server");
+        return false;    
+    }
+
     // Everyone needs to know the name of the planning frame for
     // reasons...
     // ...frame_id for the occupancy grid (for visualization)
@@ -377,6 +382,7 @@ bool Planner::initForProblemsDir(std::string const & problems_dir, bool reverse)
     return true;
 }
 
+
 bool Planner::planForProblemIdx(int problem_index, bool check) {
     // Read the specified problem's parameters
     moveit_msgs::MotionPlanRequest request_msg;
@@ -478,13 +484,24 @@ bool Planner::planForProblemIdx(int problem_index, bool check) {
         }
     }
 
-    // Write planning stats to stats file
-    stats_file_ << planning_algorithm_ << separator_ << problem_name_ << separator_
-                << problem_index << separator_ << reverse_;
-    for (auto iter = planning_stats.begin(); iter != planning_stats.end(); iter++) {
-        stats_file_ << separator_ << iter->second;
-    }
-    stats_file_ << std::endl;
+    // Log planning stats
+    std::ofstream planning_stats_file;
+    planning_stats_file.open(planning_stats_file_name_, std::ofstream::out | std::ofstream::app); 
+    planning_stats_file << planning_stats["initial solution expansions"] << "," 
+                        << planning_stats["expansions"] << ","
+                        << planning_stats["initial solution planning time"] << ","
+                        << planning_stats["final epsilon planning time"] << "," 
+                        << planning_stats["final epsilon"] << "," 
+                        << planner_interface_->getPathLen() << std::endl;
+    planning_stats_file.close();
+
+    // // Write planning stats to stats file
+    // stats_file_ << planning_algorithm_ << separator_ << problem_name_ << separator_
+    //             << problem_index << separator_ << reverse_;
+    // for (auto iter = planning_stats.begin(); iter != planning_stats.end(); iter++) {
+    //     stats_file_ << separator_ << iter->second;
+    // }
+    // stats_file_ << std::endl;
 
     if (visualize_) {
         VisualizeCollisionWorld();
@@ -838,6 +855,7 @@ bool Planner::setupPlannerParams(PlannerConfig & config) {
     planner_params_.addParam("bfs_inlation_radius", 0.02);
     planner_params_.addParam("bfs_cost_per_cell", 100);
     planner_params_.addParam("planning_space", planning_space_);
+    planner_params_.addParam("stats_file_name", planning_stats_file_name_);
     return true;
 }
 

@@ -150,6 +150,8 @@ public:
         -> std::vector<visual::Marker>;
     ///@}
 
+    // BENO 04/25
+    double getPathLen() { return m_path_len; };
 
 protected:
 
@@ -174,6 +176,7 @@ protected:
     std::unique_ptr<SBPLPlanner> m_planner;
 
     int m_sol_cost;
+    double m_path_len = 0.0;
 
     std::string m_planner_id;
 

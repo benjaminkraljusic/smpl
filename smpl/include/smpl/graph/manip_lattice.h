@@ -196,8 +196,8 @@ public:
     std::vector<ManipLatticeState*> *getStates();
     std::vector<double> getDeltas() { return m_coord_deltas; };
     double m_search_step = 0.0; // Used only by ManipLatticeDist. Ugly solution, needed for experiments...
-    
-    // TEMPORARY - DEBUGGING AND LOGGING PURPOSES
+
+    // DEBUGGING AND LOGGING PURPOSES
     std::ofstream outputDbgFile;
     std::vector<RobotState> PARENTS;
     std::vector<std::vector<RobotState>> KIDS;

@@ -137,6 +137,7 @@ class Planner {
     double epsilon_;
     bool improve_;
     double planning_repair_time_;
+    std::string planning_stats_file_name_;
 };
 
 #endif

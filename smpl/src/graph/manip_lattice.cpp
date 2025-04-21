@@ -843,7 +843,7 @@ int ManipLattice::cost(
     bool bState2IsGoal) const
 {   
     //return 1000;
-    auto DefaultCostMultiplier = 10;
+    auto DefaultCostMultiplier = 10; // 1000
     int cost = 0;
 
     for(int i = 0; i < HashEntry1->state.size(); i++)
@@ -1344,29 +1344,26 @@ bool ManipLattice::extractPath(
             for(auto S : KIDS.at(i))
                 outputDbgFile << "K: " << S << std::endl;
 
-        outputDbgFile.flush();
+            outputDbgFile.flush();
+        }
+
+        outputDbgFile << "SOLUTION: " << std::endl;
+        for(auto x : path) 
+            outputDbgFile << x << std::endl;
+        
+        outputDbgFile.close();
     }
 
-    outputDbgFile << "SOLUTION: " << std::endl;
-    for(auto x : path) 
-        outputDbgFile << x << std::endl;
-        
-    outputDbgFile.close();
-}
-
-
-double path_cost = 0.0;
-RobotState xOld = path[0];
-for(auto x : path) {
-    double sum = 0.0;
-    for(int i = 0; i < x.size(); i++)
-        sum += (x[i] - xOld[i])*(x[i] - xOld[i]);
-    xOld = x;
-    path_cost += std::sqrt(sum);
-    outputDbgFile << x << std::endl;
-}
-std::cout << "PATH COST: " << path_cost << std::endl;
-// STILL TEMPORARY
+    double path_cost = 0.0;
+    RobotState xOld = path[0];
+    for(auto x : path) {
+        double sum = 0.0;
+        for(int i = 0; i < x.size(); i++)
+            sum += (x[i] - xOld[i])*(x[i] - xOld[i]);
+        xOld = x;
+        path_cost += std::sqrt(sum);
+    }
+    std::cout << "PATH COST: " << path_cost << std::endl;
 
     return true;
 }

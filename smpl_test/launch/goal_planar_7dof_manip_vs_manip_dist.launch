@@ -16,6 +16,8 @@
     <arg name="epsilon" default="50.0"/>
     <arg name="improve" default="true"/>
     <arg name="repair_time" default="40.0"/>
+    <arg name="m_prim_file" default="$(find smpl_test)/config/planar_7dof.mprim"/>
+    <arg name="stats_file" default=""/>
 
     <arg unless="$(arg debug)"   name="debug-prefix"   value=""/>
     <arg     if="$(arg debug)"   name="debug-prefix"   value="gdb -ex run --args"/>
@@ -48,7 +50,7 @@
 
         <!-- planner parameters -->
         <rosparam command="load" file="$(find smpl_test)/config/planar_7dof.yaml"/>
-        <param name="planning/mprim_filename" value="$(find smpl_test)/config/planar_7dof.mprim"/>
+        <param name="planning/mprim_filename" value="$(arg m_prim_file)"/>
 
         <!-- <param name="planning_problems_directory" value="$(find robowflex_library)/problems/fetch/bookshelf_small_fetch"/> -->
         <param name="planning_problems_directory"  value="$(arg dataset)"/>
@@ -69,6 +71,7 @@
         <param name="epsilon" value="$(arg epsilon)"/>
         <param name="improve" value="$(arg improve)"/>
         <param name="repair_time" value="$(arg repair_time)"/>
+        <param name="stats_file_name" value="$(arg stats_file)"/>
 
     </node>
 </launch>
