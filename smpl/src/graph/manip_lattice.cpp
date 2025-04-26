@@ -1268,7 +1268,6 @@ bool ManipLattice::extractPath(
         }
 
         if (curr_id == getGoalStateID()) {
-            // std::cout << "JEST GOAL JEBO GA TI" << std::endl;
             SMPL_DEBUG_NAMED(G_LOG, "Search for transition to goal state");
 
             ManipLatticeState* prev_entry = m_states[prev_id];
@@ -1354,16 +1353,16 @@ bool ManipLattice::extractPath(
         outputDbgFile.close();
     }
 
-    double path_cost = 0.0;
-    RobotState xOld = path[0];
-    for(auto x : path) {
-        double sum = 0.0;
-        for(int i = 0; i < x.size(); i++)
-            sum += (x[i] - xOld[i])*(x[i] - xOld[i]);
-        xOld = x;
-        path_cost += std::sqrt(sum);
-    }
-    std::cout << "PATH COST: " << path_cost << std::endl;
+    // double path_cost = 0.0;
+    // RobotState xOld = path[0];
+    // for(auto x : path) {
+    //     double sum = 0.0;
+    //     for(int i = 0; i < x.size(); i++)
+    //         sum += (x[i] - xOld[i])*(x[i] - xOld[i]);
+    //     xOld = x;
+    //     path_cost += std::sqrt(sum);
+    // }
+    // std::cout << "PATH COST: " << path_cost << std::endl;
 
     return true;
 }
